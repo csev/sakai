@@ -31,12 +31,18 @@ public class JetspeedRunData extends RunData
 	protected SessionState state = null;
 
 	protected String pid = null;
+	protected HttpServletRequest my_req = null;
 
 	public JetspeedRunData(HttpServletRequest req, SessionState state, String pid, ParameterParser params)
 	{
 		super(req, params);
+System.out.println("JetspeedRunData "+state+" pid="+pid);
+System.out.println("url="+req.getRequestURL().toString());
+System.out.println(params);
+System.out.println(state.getAttributeNames());
 		this.state = state;
 		this.pid = pid;
+		this.my_req = req;
 	}
 
 	// support the return of the SessionState by:
@@ -51,6 +57,14 @@ public class JetspeedRunData extends RunData
 	 */
 	public SessionState getPortletSessionState(String id)
 	{
+System.out.println("--------------");
+System.out.println("url="+this.my_req.getRequestURL().toString());
+System.out.println("getPortletSessionState id="+id);
+			for (String name : state.getAttributeNames())
+            {
+                Object value = state.getAttribute(name);
+				System.out.println(name+"="+value);
+            }
 		return state;
 	}
 
@@ -61,6 +75,7 @@ public class JetspeedRunData extends RunData
 	 */
 	public String getJs_peid()
 	{
+System.out.println("getJs_peid pid="+pid);
 		return pid;
 	}
 }
