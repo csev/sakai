@@ -91,6 +91,7 @@ public abstract class VmServlet extends ComponentServlet
 	protected void setVmStdRef(HttpServletRequest request, HttpServletResponse response)
 	{
 		// include some standard references
+System.out.println("sakai_ActionURL="+getActionURL(request));
 		setVmReference("sakai_ActionURL", getActionURL(request), request);
 
 		// get the include (from the portal) for the HTML HEAD

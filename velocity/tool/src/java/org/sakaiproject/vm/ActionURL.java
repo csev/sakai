@@ -261,6 +261,8 @@ public class ActionURL
 
 		ToolURL url = null;
 		String path = m_base;
+System.out.println("getToolURL path="+path);
+		path = path + "/42";
 		if (m_isAction)
 		{
 			url = urlManager.createActionURL();
@@ -274,6 +276,7 @@ public class ActionURL
 		{
 			url = urlManager.createRenderURL();
 		}
+System.out.println("getToolURL url="+url);
 		if (url != null)
 		{
 			if ((this.m_QueryString != null) && (this.m_QueryString.length() > 0))
@@ -312,6 +315,7 @@ public class ActionURL
 			}
 			url.setParameters(m_parameters);
 			reset();
+System.out.println("getToolURL retval="+url);
 			return url.toString();
 		}
 		return null;
