@@ -103,9 +103,9 @@ public class OIDCServlet extends HttpServlet {
 		String redirect_uri = (String) request.getParameter("redirect_uri");
 		redirect_uri = StringUtils.trimToNull(redirect_uri);
 
-                String encoded_login_hint = (String) request.getParameter("login_hint");
-                byte[] valueDecoded = Base64.decodeBase64(encoded_login_hint);
-                String login_hint = new String(valueDecoded);
+		String encoded_login_hint = (String) request.getParameter("login_hint");
+		byte[] valueDecoded = Base64.decodeBase64(encoded_login_hint);
+		String login_hint = new String(valueDecoded);
 		if (StringUtils.isEmpty(login_hint)) {
 			state = null;
 		}
@@ -113,9 +113,9 @@ public class OIDCServlet extends HttpServlet {
 		String nonce = (String) request.getParameter("nonce");
 		nonce = StringUtils.trimToNull(nonce);
 
-		if (state == null || login_hint == null || nonce == null) {
-			LTI13Util.return400(response, "Missing login_hint, nonce or state parameter");
-			log.error("Missing login_hint or state parameter");
+		if (state == null || login_hint == null || nonce == null || redirect_uri == null) {
+			LTI13Util.return400(response, "Missing login_hint, nonce, redirect_uri or state parameter");
+			log.error("Missing login_hint, nonce, redirect_uri or state parameter");
 			return;
 		}
 

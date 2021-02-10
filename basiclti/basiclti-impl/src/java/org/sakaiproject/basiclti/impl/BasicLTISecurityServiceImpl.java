@@ -41,6 +41,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
@@ -327,6 +328,83 @@ public class BasicLTISecurityServiceImpl implements EntityProducer {
 
 	}
 
+	/*
+		iss required, the issuer identifier identifying the learning platform
+
+		login_hint	required, Hint to the Authorization Server about the login
+					identifier the End-User might use to log in (if necessary).
+	*/
+	private JSONObject retrieveOIDC(HttpServletRequest req, HttpServletResponse res,
+		Map<String, Object> content, Map<String, Object> tool, String oidc_endpoint, ResourceLoader rb)
+	{
+		// req.getRequestURL()=http://localhost:8080/access/basiclti/site/85fd092b-1755-4aa9-8abc-e6549527dce0/content:0
+		// req.getRequestURI()=/access/basiclti/site/85fd092b-1755-4aa9-8abc-e6549527dce0/content:0
+		String login_hint = req.getRequestURI();
+		String query_string = req.getQueryString();
+
+		if ( StringUtils.isNotEmpty(query_string)) {
+			login_hint = login_hint + "?" + query_string;
+		}
+		String launch_url = StringUtils.trimToNull((String) tool.get(LTIService.LTI_LAUNCH));
+		if ( content != null ) {
+			String content_launch_url = StringUtils.trimToNull((String) content.get(LTIService.LTI_LAUNCH));
+			if ( content_launch_url != null ) launch_url = content_launch_url;
+		}
+
+		byte[] bytesEncoded = Base64.encodeBase64(login_hint.getBytes());
+		String encoded_login_hint = new String(bytesEncoded);
+		try {
+			URIBuilder redirect = new URIBuilder(oidc_endpoint.trim());
+			redirect.addParameter("iss", SakaiBLTIUtil.getOurServerUrl());
+			redirect.addParameter("login_hint", encoded_login_hint);
+			if (StringUtils.isNotBlank(launch_url)) {
+				redirect.addParameter("target_link_uri", launch_url);
+			}
+			// doRedirect(req, res, redirect.build().toString(), rb);
+			String proxyUrl = redirect.build().toString();
+        try {
+
+            java.net.URL url = new java.net.URL(proxyUrl);
+            java.net.HttpURLConnection con = (java.net.HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            con.setConnectTimeout(3000);
+            con.setReadTimeout(3000);
+            con.setInstanceFollowRedirects(true);
+			con.setRequestProperty ("Accept", "application/json");
+
+            try ( java.io.BufferedReader in = new java.io.BufferedReader(
+                new java.io.InputStreamReader(con.getInputStream())) )
+            {
+                String inputLine;
+                StringBuffer data = new StringBuffer();
+                while ((inputLine = in.readLine()) != null) {
+                    data.append(inputLine);
+                }
+                if ( data.length() > 10000 ) {
+                    return null;
+                }
+
+                String jsonString = data.toString();
+
+                Object js = JSONValue.parse(jsonString);
+                if (js == null || !(js instanceof JSONObject)) {
+                    return null;
+                }
+
+				return (JSONObject) js;
+            } catch (Exception e) {
+				return null;
+            }
+        } catch (Exception e) {
+			return null;
+        }
+
+		} catch (URISyntaxException e) {
+			log.error("Syntax exception building the URL with the params: {}.", e.getMessage());
+		}
+		return null;
+	}
+
 	/**
 	 * Handle the LTI 1.1.2 round trip logic
 	*/
@@ -442,8 +520,19 @@ public class BasicLTISecurityServiceImpl implements EntityProducer {
 
 					if (SakaiBLTIUtil.isLTI13(tool, null) && StringUtils.isNotBlank(oidc_endpoint) &&
 							( StringUtils.isEmpty(state) || StringUtils.isEmpty(state) ) ) {
-						redirectOIDC(req, res, null, tool, oidc_endpoint, rb);
-						return;
+						JSONObject js = retrieveOIDC(req, res, null, tool, oidc_endpoint, rb);
+System.out.println("js="+js);
+						if ( js != null ) {
+							state = js.get("state") instanceof String ? ((String) js.get("state")) : null;
+							nonce = js.get("nonce") instanceof String ? ((String) js.get("nonce")) : null;
+							String redirect_uri = js.get("redirect_uri") instanceof String ? ((String) js.get("redirect_uri")) : null;
+System.out.println("state="+state+" nonce="+nonce+" redirect_uri="+redirect_uri);
+							tool.put("redirect_uri", redirect_uri);
+						}
+						if ( StringUtils.isEmpty(state) || StringUtils.isEmpty(state) ) {
+							redirectOIDC(req, res, null, tool, oidc_endpoint, rb);
+							return;
+						}
 					}
 
 					handleLTI112(req, res, tool);

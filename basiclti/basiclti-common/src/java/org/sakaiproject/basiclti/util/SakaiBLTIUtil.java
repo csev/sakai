@@ -1965,6 +1965,7 @@ public class SakaiBLTIUtil {
 
 			// If we have been told to send this to a redirect_uri instead of a launch...
 			String redirect_uri = req.getParameter("redirect_uri");
+			if ( StringUtils.isBlank(redirect_uri) ) redirect_uri = (String) tool.get("redirect_uri");
 			if ( redirect_uri != null && lti13_oidc_redirect != null ) {
 				if ( lti13_oidc_redirect.indexOf(redirect_uri) >= 0 ) {
 					launch_url = redirect_uri;
