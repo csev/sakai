@@ -72,6 +72,7 @@ import org.sakaiproject.time.api.UserTimeService;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserDirectoryService;
+import org.sakaiproject.lti.api.LTIService;
 import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.util.ResourceLoader;
 
@@ -99,6 +100,7 @@ public class AssignmentEntityProvider extends AbstractEntityProvider implements 
     private ServerConfigurationService serverConfigurationService;
     private UserDirectoryService userDirectoryService;
     private UserTimeService userTimeService;
+    private LTIService ltiService;
 
     // HTML is deliberately not handled here, so that it will be handled by RedirectingAssignmentEntityServlet
     public String[] getHandledOutputFormats() {
@@ -501,6 +503,26 @@ public class AssignmentEntityProvider extends AbstractEntityProvider implements 
 
                 }).filter(Objects::nonNull).collect(Collectors.toList());
 
+        Integer contentKey = assignment.getContentId();
+        String ltiGradeLaunch = null;
+        if ( contentKey != null ) {
+            String userId = null;
+            for (SimpleSubmission submission : submissions) {
+                if ( ! submission.userSubmission ) continue;
+                for(SimpleSubmitter submitter: submission.submitters) {
+                    userId = submitter.id;
+                }
+            }
+
+            // TODO: Make this Java 8 lambda style to make Earle happy
+            // String userId2 = submissions.stream().filter(s -> s.userSubmission).map(s -> s.submitters).forEach(m -> m.id);
+            // String userId2 = submissions.stream().filter(s -> s.userSubmission).map(s -> s.submitters).stream().map(m -> m.id);
+
+            if ( userId != null ) {
+                ltiGradeLaunch = "/access/basiclti/site/" + siteId + "/content:" + contentKey + "?for_user=" + userId;
+            }
+        }
+
         List<SimpleGroup> groups = site.getGroups().stream().map(SimpleGroup::new).collect(Collectors.toList());
 
         Map<String, Object> data = new HashMap<>();
@@ -510,6 +532,7 @@ public class AssignmentEntityProvider extends AbstractEntityProvider implements 
         data.put("showOfficialPhoto", serverConfigurationService.getBoolean("assignment.show.official.photo", true));
         String lOptions = serverConfigurationService.getString("assignment.letterGradeOptions", "A+,A,A-,B+,B,B-,C+,C,C-,D+,D,D-,E,F");
         data.put("letterGradeOptions", lOptions);
+        data.put("ltiGradeLaunch", ltiGradeLaunch);
 
         return new ActionReturn(data);
     }
@@ -1143,6 +1166,7 @@ public class AssignmentEntityProvider extends AbstractEntityProvider implements 
             if (a == null) {
                 return;
             }
+
             this.id = a.getId();
             this.openTime = a.getOpenDate();
             this.openTimeString = a.getOpenDate().toString();
