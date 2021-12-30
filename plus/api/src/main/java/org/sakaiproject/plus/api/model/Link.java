@@ -55,12 +55,12 @@ public class Link extends BaseLTI implements PersistableEntity<String> {
     @Column(name = "LINK", length = 1024, nullable = false)
     private String link;
 
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "CONTEXT_GUID", nullable = false)
 	private Context context;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "LINEITEM_GUID", referencedColumnName = "LINEITEM_GUID")
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @JoinColumn(name = "LINEITEM_GUID", referencedColumnName = "LINEITEM_GUID", nullable = true)
     private LineItem lineItem;
 
     @Column(name = "TITLE", length = 1024, nullable = true)

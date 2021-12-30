@@ -15,6 +15,8 @@
  */
 package org.sakaiproject.plus.impl;
 
+import java.util.Optional;
+
 import javax.annotation.Resource;
 
 import org.hibernate.SessionFactory;
@@ -67,5 +69,39 @@ public class LaunchImpl implements org.sakaiproject.plus.api.Launch, java.io.Ser
     @Resource private LinkRepository linkRepository;
     @Resource private LineItemRepository lineItemRepository;
     @Resource private ScoreRepository scoreRepository;
+
+
+	public Tenant getTenant()
+	{
+		if ( tenant != null ) return tenant;
+		if ( tenantId == null ) {
+			System.out.println("Fail");
+			return null;
+		}
+		Optional<Tenant> optTenant = tenantRepository.findById(tenantId);
+        if ( optTenant.isPresent() ) {
+            tenant = optTenant.get();
+			return tenant;
+        } else {
+			System.out.println("Fail");
+			return null;
+		}
+
+	}
+    public void setTenant(Tenant tenant)
+	{
+		this.tenant = tenant;
+		this.tenantId = null;
+		if ( tenant != null) this.tenantId = tenant.getId();
+	} 
+    public String getTenantId()
+	{
+		return tenantId;
+	}
+    public void setTenantId(String tenantId)
+	{
+		this.tenantId = tenantId;
+		this.tenant = null;
+	}
 
 }

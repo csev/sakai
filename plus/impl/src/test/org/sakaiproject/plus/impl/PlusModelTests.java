@@ -163,7 +163,7 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		Context newContext = contextRepository.findByContextAndTenant("SI364", tenant);
 
 		LineItem lineItem = new LineItem();
-		lineItem.setLineItem("YADA");
+		lineItem.setResourceId("YADA");
 		lineItem.setContext(context);
 		lineItemRepository.save(lineItem);
 		launch.setLineItem(lineItem);

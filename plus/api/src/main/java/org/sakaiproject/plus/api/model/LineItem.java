@@ -15,6 +15,8 @@
  */
 package org.sakaiproject.plus.api.model;
 
+import java.time.Instant;
+
 import javax.persistence.Column;
 import javax.persistence.Lob;
 import javax.persistence.Embedded;
@@ -26,6 +28,7 @@ import javax.persistence.Index;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.CascadeType;
 
@@ -38,8 +41,8 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "PLUS_LINEITEM",
-  indexes = { @Index(columnList = "LINEITEM, CONTEXT_GUID") },
-  uniqueConstraints = { @UniqueConstraint(columnNames = { "LINEITEM", "CONTEXT_GUID" }) }
+  indexes = { @Index(columnList = "RESOURCE_ID, CONTEXT_GUID") },
+  uniqueConstraints = { @UniqueConstraint(columnNames = { "RESOURCE_ID", "CONTEXT_GUID" }) }
 )
 @Getter
 @Setter
@@ -51,14 +54,45 @@ public class LineItem extends BaseLTI implements PersistableEntity<String> {
     @GenericGenerator(name = "uuid", strategy = "uuid2")
     private String id;
 
-    @Column(name = "LINEITEM", length = 1024, nullable = false)
-    private String lineItem;
-
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
 	@JoinColumn(name = "CONTEXT_GUID", nullable = false)
 	private Context context;
 
-    @Column(name = "TITLE", length = 1024, nullable = true)
-    private String title;
+	// Can optionally belong to a link
+	@OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "LINK_GUID", nullable = true)
+	private Link link;
+
+	// The AGS resourceId - recommended
+    @Column(name = "RESOURCE_ID", length = 1024, nullable = true)
+    private String resourceId;
+
+    @Column(name = "TAG", length = 1024, nullable = true)
+    private String tag;
+
+    @Column(name = "LABEL", length = 1024, nullable = true)
+    private String label;
+
+    @Column(name = "SCOREMAXIMUM")
+    private Integer scoreMaximum;
+
+    @Column(name = "STARTDATETIME")
+    private Instant startDateTime;
+
+    @Column(name = "ENDDATETIME")
+    private Instant endDateTime;
 
 }
+
+/*
+{
+  "id" : "https://lms.example.com/context/2923/lineitems/1",
+  "scoreMaximum" : 60,
+  "label" : "Chapter 5 Test",
+  "resourceId" : "a-9334df-33",
+  "tag" : "grade",
+  "resourceLinkId" : "1g3k4dlk49fk",
+  "startDateTime": "2018-03-06T20:05:02Z",
+  "endDateTime": "2018-04-06T22:05:03Z"
+}
+*/

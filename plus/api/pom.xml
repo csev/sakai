@@ -33,6 +33,10 @@
       <groupId>org.sakaiproject.kernel</groupId>
       <artifactId>sakai-kernel-api</artifactId>
     </dependency>
+    <dependency>
+        <groupId>org.sakaiproject.basiclti</groupId>
+        <artifactId>basiclti-util</artifactId>
+    </dependency>
   </dependencies>
 
 </project>
