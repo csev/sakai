@@ -17,6 +17,8 @@ package org.sakaiproject.plus.impl;
 
 import java.time.Instant;
 
+import org.sakaiproject.plus.api.Launch;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
@@ -103,6 +105,7 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 	@Resource private LinkRepository linkRepository;
 	@Resource private LineItemRepository lineItemRepository;
 	@Resource private ScoreRepository scoreRepository;
+	@Resource private Launch launch;
 
 	User user1User = null;
 	User user2User = null;
@@ -121,6 +124,7 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 
 	@Test
 	public void testModelObjects() {
+
 		Instant now = Instant.now();
 		Tenant tenant = new Tenant();
 		tenant.setCreated_at(now);
@@ -135,6 +139,7 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		Map<String, String> settings = tenant.getSettings();
 		settings.put("secret", "42");
 		tenantRepository.save(tenant);
+		launch.setTenant(tenant);
 		String tenant_id = tenant.getId();
 
 		Optional<Tenant> optTenant = tenantRepository.findById(tenant_id);
@@ -145,6 +150,7 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		Subject subject = new Subject("Yada", tenant);
 		subject.setEmail("hirouki@p.com");
 		subjectRepository.save(subject);
+		launch.setSubject(subject);
 
 		Subject newSubject = subjectRepository.findBySubjectAndTenant("Yada", tenant);
 
@@ -152,6 +158,7 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		context.setContext("SI364");
 		context.setTenant(tenant);
 		contextRepository.save(context);
+		launch.setContext(context);
 
 		Context newContext = contextRepository.findByContextAndTenant("SI364", tenant);
 
@@ -159,17 +166,21 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		lineItem.setLineItem("YADA");
 		lineItem.setContext(context);
 		lineItemRepository.save(lineItem);
+		launch.setLineItem(lineItem);
 
 		Link link = new Link();
 		link.setLink("YADA");
 		link.setContext(context);
 		link.setLineItem(lineItem);
 		linkRepository.save(link);
+		launch.setLink(link);
 
 		Score score = new Score();
 		score.setLineItem(lineItem);
 		score.setSubject(subject);
 		scoreRepository.save(score);
+		launch.setScore(score);
+
 	}
 
 	@Test
@@ -197,6 +208,7 @@ System.out.println("funkybody="+funkybody);
 		launch = mapper.readValue(funkybody, LaunchJWT.class);
 		assertNotNull(launch);
 System.out.println("launch="+launch);
+
 
 
 

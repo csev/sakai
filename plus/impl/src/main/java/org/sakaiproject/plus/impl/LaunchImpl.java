@@ -16,6 +16,7 @@
 package org.sakaiproject.plus.impl;
 
 import javax.annotation.Resource;
+
 import org.hibernate.SessionFactory;
 
 import org.sakaiproject.plus.api.Launch;
