@@ -130,19 +130,20 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		tenant.setCreated_at(now);
 		tenant.setTitle("Yada");
 		tenant.setIssuer("https://www.example.com");
-		tenant.setClient_id("42");
-		tenant.setOidc_auth("https://www.example.com/auth");
-		tenant.setOidc_keyset("https://www.example.com/keyset");
+		tenant.setClientId("42");
+		tenant.setDeploymentId("1");
+		tenant.setOidcAuth("https://www.example.com/auth");
+		tenant.setOidcKeyset("https://www.example.com/keyset");
 		assertTrue(tenant.isDraft());
-		tenant.setOidc_token("https://www.example.com/token");
+		tenant.setOidcToken("https://www.example.com/token");
 		assertFalse(tenant.isDraft());
 		Map<String, String> settings = tenant.getSettings();
 		settings.put("secret", "42");
 		tenantRepository.save(tenant);
 		launch.setTenant(tenant);
-		String tenant_id = tenant.getId();
+		String tenantId = tenant.getId();
 
-		Optional<Tenant> optTenant = tenantRepository.findById(tenant_id);
+		Optional<Tenant> optTenant = tenantRepository.findById(tenantId);
 		if ( optTenant.isPresent() ) {
 			Tenant newTenant = optTenant.get();
 		}
@@ -209,10 +210,20 @@ System.out.println("funkybody="+funkybody);
 		assertNotNull(launch);
 System.out.println("launch="+launch);
 
-
-
-
-
+		String issuer = launch.issuer;
+		String clientId = launch.audience;
+		String subject = launch.subject;
+		String contextId = launch.context.id;
+		String resourceLinkId = launch.resource_link.id;
+		String deploymentId = launch.deployment_id;
+System.out.println(
+		" issuer="+issuer+
+		" clientId="+clientId+
+		" deploymentId="+deploymentId+
+		" contextId="+contextId+
+		" resourceLinkId="+resourceLinkId+
+		" subject="+subject
+);
 
 	}
 

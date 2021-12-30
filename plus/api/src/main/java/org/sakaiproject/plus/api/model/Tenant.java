@@ -70,20 +70,23 @@ public class Tenant extends BaseLTI implements PersistableEntity<String> {
     protected String issuer;
 
     @Column(name = "CLIENT_ID", length = 1024, nullable = true)
-    private String client_id;
+    private String clientId;
+
+    @Column(name = "DEPLOYMENT_ID", length = 1024, nullable = true)
+    private String deploymentId;
 
     @Column(name = "OIDC_AUTH", length = 1024, nullable = true)
-    private String oidc_auth;
+    private String oidcAuth;
 
     @Column(name = "OIDC_KEYSET", length = 1024, nullable = true)
-    private String oidc_keyset;
+    private String oidcKeyset;
 
     @Column(name = "OIDC_TOKEN", length = 1024, nullable = true)
-    private String oidc_token;
+    private String oidcToken;
 
-	// This is usually optional except for D2L 
+	// This is usually optional except for D2L
     @Column(name = "OIDC_AUDIENCE", length = 1024, nullable = true)
-    private String oidc_audience;
+    private String oidcAudience;
 
     @Column(name = "CACHE_KID", length = 1024, nullable = true)
     private String cache_kid;
@@ -97,11 +100,12 @@ public class Tenant extends BaseLTI implements PersistableEntity<String> {
 
 	public boolean isDraft()
 	{
-		if ( issuer == null || client_id == null || oidc_auth == null || 
-				oidc_keyset == null || oidc_token == null ) return true;
+		if ( issuer == null || clientId == null || deploymentId == null ||
+				oidcAuth == null || oidcKeyset == null || oidcToken == null ) return true;
 
-		if ( issuer.length() < 1 || client_id.length() < 1 || oidc_auth.length() < 1 || 
-				oidc_keyset.length() < 1 || oidc_token.length() < 1 ) return true;
+		if ( issuer.length() < 1 || clientId.length() < 1 ||
+				deploymentId.length() < 1 || oidcAuth.length() < 1 ||
+				oidcKeyset.length() < 1 || oidcToken.length() < 1 ) return true;
 		return false;
 	}
 /*
