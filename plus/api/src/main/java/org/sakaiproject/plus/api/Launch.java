@@ -22,7 +22,7 @@ import org.sakaiproject.plus.api.model.Link;
 import org.sakaiproject.plus.api.model.LineItem;
 import org.sakaiproject.plus.api.model.Score;
 
-// Need to create getters and setters by hand because lombok does not like interafaces :)
+// Need to create getters and setters by hand because lombok does not like interfaces :)
 public interface Launch {
 
 	public Tenant getTenant();

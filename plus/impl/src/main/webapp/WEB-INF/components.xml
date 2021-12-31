@@ -56,7 +56,7 @@
     </bean>
 
     <bean id="org.sakaiproject.plus.api.Launch"
-        class="org.sakaiproject.plus.impl.LaunchImpl">
+        class="org.sakaiproject.plus.impl.service.LaunchImpl">
         <property name="sessionFactory" ref="org.sakaiproject.springframework.orm.hibernate.GlobalSessionFactory"/>
     </bean>
 

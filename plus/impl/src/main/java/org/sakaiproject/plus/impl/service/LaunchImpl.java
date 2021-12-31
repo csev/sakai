@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sakaiproject.plus.impl;
+package org.sakaiproject.plus.impl.service;
 
 import java.util.Optional;
 
