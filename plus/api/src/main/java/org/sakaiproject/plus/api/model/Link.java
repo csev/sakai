@@ -66,4 +66,7 @@ public class Link extends BaseLTI implements PersistableEntity<String> {
     @Column(name = "TITLE", length = 1024, nullable = true)
     private String title;
 
+    @Column(name = "DESCRIPTION", length = 4096, nullable = true)
+    private String description;
+
 }

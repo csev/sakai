@@ -86,55 +86,79 @@ public class LaunchServiceImpl implements LaunchService {
 
         String contextId = launchJWT.context.id;
         String subjectId = launchJWT.subject;
-        String resourceLinkId = launchJWT.resource_link.id;
+        String linkId = launchJWT.resource_link.id;
 System.out.println(
         " issuer="+issuer+
         " clientId="+clientId+
         " deploymentId="+deploymentId+
         " contextId="+contextId+
-        " resourceLinkId="+resourceLinkId+
+        " linkId="+linkId+
         " subjectId="+subjectId
 );
 		LaunchImpl launch = new LaunchImpl();
 		launch.launchService = this;
 		launch.tenant = tenant;
 
-		Subject subject = subjectRepository.findBySubjectAndTenant(subjectId, tenant);
+		boolean changed = false;
+		Subject subject = null;
+		if ( subjectId != null ) {
+			subject = subjectRepository.findBySubjectAndTenant(subjectId, tenant);
 System.out.println("subject="+subject);
-		if ( subject == null ) {
+			if ( subject == null ) {
 System.out.println("Making new subject...");
-			subject = new Subject(subjectId, tenant);
-			subject.setSubject(subjectId);
-			subject.setEmail(launchJWT.email);
-			String name = launchJWT.name;
-			if ( name == null ) {
-				name = "";
-				if ( launchJWT.given_name != null ) name = launchJWT.given_name;
-				if ( launchJWT.family_name != null ) {
-					if ( name.length() > 0 ) name = name + " ";
-					name = name + launchJWT.family_name;
+				subject = new Subject(subjectId, tenant);
+				subject.setSubject(subjectId);
+				subject.setEmail(launchJWT.email);
+				String name = launchJWT.name;
+				if ( name == null ) {
+					name = "";
+					if ( launchJWT.given_name != null ) name = launchJWT.given_name;
+					if ( launchJWT.family_name != null ) {
+						if ( name.length() > 0 ) name = name + " ";
+						name = name + launchJWT.family_name;
+					}
+					name = name.trim();
+					if ( name.length() < 1 ) name = null;
 				}
-				name = name.trim();
-				if ( name.length() < 1 ) name = null;
+				subject.setDisplayName(name);
+				changed = true;
 			}
-			subject.setDisplayName(name);
-			subjectRepository.save(subject);
+			if ( changed) subjectRepository.save(subject);
+			launch.subject = subject;
 		}
-		launch.subject = subject;
 
-		// TODO deal with null...
-		Context context = contextRepository.findByContextAndTenant(contextId, tenant);
-		if ( context == null ) {
+		Context context = null;
+		if ( contextId != null ) {
+			context = contextRepository.findByContextAndTenant(contextId, tenant);
+			changed = false;
+			if ( context == null ) {
 System.out.println("Making new context...");
-			context = new Context();
-			context.setContext(contextId);
-			context.setTenant(tenant);
-			context.setTitle(launchJWT.context.title);
-			context.setLabel(launchJWT.context.title);
-			contextRepository.save(context);
+				context = new Context();
+				context.setContext(contextId);
+				context.setTenant(tenant);
+				context.setTitle(launchJWT.context.title);
+				context.setLabel(launchJWT.context.title);
+				changed = true;
+			}
+			if ( changed) contextRepository.save(context);
+			launch.context = context;
 		}
-		launch.context = context;
 
+		if ( linkId != null && context != null ) {
+			Link link = linkRepository.findByLinkAndContext(linkId, context);
+			changed = false;
+			if ( link == null ) {
+System.out.println("Making new link...");
+				link = new Link();
+				link.setLink(linkId);
+				link.setContext(context);
+				link.setTitle(launchJWT.resource_link.title);
+				link.setDescription(launchJWT.resource_link.description);
+				changed = true;
+			}
+			if ( changed) linkRepository.save(link);
+			launch.link = link;
+		}
 
 		return launch;
 	}

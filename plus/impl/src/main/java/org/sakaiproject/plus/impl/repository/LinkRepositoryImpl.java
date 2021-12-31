@@ -30,4 +30,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 public class LinkRepositoryImpl extends SpringCrudRepositoryImpl<Link, String>  implements LinkRepository {
 
+	@Transactional(readOnly = true)
+    public Link findByLinkAndContext(String link, Context context) {
+
+        // TODO: Figure out LIMIT 1 without using a list hack - sheesh it is a uniqueness constraint
+        System.out.println("findByResourceAndContext link="+link+" context="+context.getId());
+        List<Link> list = (List<Link>) sessionFactory.getCurrentSession().createCriteria(Link.class)
+            .add(Restrictions.eq("link", link))
+            .add(Restrictions.eq("context", context))
+            .list();
+System.out.println("list = "+list);
+        if ( list == null || list.size() < 1 ) return null;
+        return list.get(0);
+    }
+
 }

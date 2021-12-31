@@ -23,4 +23,6 @@ import org.sakaiproject.springframework.data.SpringCrudRepository;
 
 public interface LinkRepository extends SpringCrudRepository<Link, String> {
 
+	Link findByLinkAndContext(String link, Context context);
+
 }
