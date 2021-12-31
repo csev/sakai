@@ -64,55 +64,12 @@ public class Subject extends BaseLTI implements PersistableEntity<String> {
 	private Tenant tenant;
 
     @Column(name = "DISPLAYNAME", length = 1024, nullable = true)
-    private String displayname;
+    private String displayName;
 
     @Column(name = "EMAIL", length = 1024, nullable = true)
     private String email;
 
     @Column(name = "LOCALE", length = 63, nullable = true)
-    private String local;
+    private String locale;
 
-/*
-array( "{$CFG->dbprefix}lti_user",
-"create table {$CFG->dbprefix}lti_user (
-    user_id             INTEGER NOT NULL AUTO_INCREMENT,
-    user_sha256         CHAR(64) NULL,
-    user_key            TEXT NULL,
-    subject_sha256      CHAR(64) NULL,
-    subject_key         TEXT NULL,
-    deleted             TINYINT(1) NOT NULL DEFAULT 0,
-
-    key_id              INTEGER NOT NULL,
-    profile_id          INTEGER NULL,
-
-    displayname         TEXT NULL,
-    email               TEXT NULL,
-    locale              CHAR(63) NULL,
-    image               TEXT NULL,
-    subscribe           SMALLINT NULL,
-
-    json                MEDIUMTEXT NULL,
-    login_at            TIMESTAMP NULL,
-    login_count         BIGINT DEFAULT 0,
-    login_time          BIGINT DEFAULT 0,
-    -- Google classroom token for this user
-    gc_token            TEXT NULL,
-
-    ipaddr              VARCHAR(64),
-    entity_version      INTEGER NOT NULL DEFAULT 0,
-    created_at          TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at          TIMESTAMP NULL,
-    deleted_at          TIMESTAMP NULL,
-
-    CONSTRAINT `{$CFG->dbprefix}lti_user_ibfk_1`
-        FOREIGN KEY (`key_id`)
-        REFERENCES `{$CFG->dbprefix}lti_key` (`key_id`)
-        ON DELETE CASCADE ON UPDATE CASCADE,
-
-    CONSTRAINT `{$CFG->dbprefix}lti_user_const_1` UNIQUE(key_id, user_sha256),
-    CONSTRAINT `{$CFG->dbprefix}lti_user_const_2` UNIQUE(key_id, subject_sha256),
-    CONSTRAINT `{$CFG->dbprefix}lti_user_const_pk` PRIMARY KEY (user_id)
-) ENGINE = InnoDB DEFAULT CHARSET=utf8"),
-
- */
 }

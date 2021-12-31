@@ -69,13 +69,14 @@ public class LaunchServiceImpl implements LaunchService {
 
 		String issuer = launchJWT.issuer;
         String clientId = launchJWT.audience;
+        String deploymentId = launchJWT.deployment_id;
 
-		if ( issuer == null || clientId == null ) {
-		   throw new RuntimeException("LaunchJWT issuer and clientId (audience) must be non-null");
+		if ( issuer == null || clientId == null || deploymentId == null ) {
+		   throw new RuntimeException("LaunchJWT issuer, clientId/audience, and deploymentId must be non-null");
 		}
 
-		if ( ! issuer.equals(tenant.getIssuer()) || ! clientId.equals(tenant.getClientId()) ) {
-		   throw new RuntimeException("issuer and clientId (audience) must match between tenant and LaunchJWT");
+		if ( ! issuer.equals(tenant.getIssuer()) || ! clientId.equals(tenant.getClientId()) || ! deploymentId.equals(tenant.getDeploymentId()) ) {
+		   throw new RuntimeException("issuer, clientId/audience and deploymentId must match between tenant and LaunchJWT");
 		}
 
 		if ( tenant.getId() == null ) {
@@ -83,20 +84,58 @@ public class LaunchServiceImpl implements LaunchService {
 		}
 
 
-        String subject = launchJWT.subject;
         String contextId = launchJWT.context.id;
+        String subjectId = launchJWT.subject;
         String resourceLinkId = launchJWT.resource_link.id;
-        String deploymentId = launchJWT.deployment_id;
 System.out.println(
         " issuer="+issuer+
         " clientId="+clientId+
         " deploymentId="+deploymentId+
         " contextId="+contextId+
         " resourceLinkId="+resourceLinkId+
-        " subject="+subject
+        " subjectId="+subjectId
 );
 		LaunchImpl launch = new LaunchImpl();
 		launch.launchService = this;
+		launch.tenant = tenant;
+
+		Subject subject = subjectRepository.findBySubjectAndTenant(subjectId, tenant);
+System.out.println("subject="+subject);
+		if ( subject == null ) {
+System.out.println("Making new subject...");
+			subject = new Subject(subjectId, tenant);
+			subject.setSubject(subjectId);
+			subject.setEmail(launchJWT.email);
+			String name = launchJWT.name;
+			if ( name == null ) {
+				name = "";
+				if ( launchJWT.given_name != null ) name = launchJWT.given_name;
+				if ( launchJWT.family_name != null ) {
+					if ( name.length() > 0 ) name = name + " ";
+					name = name + launchJWT.family_name;
+				}
+				name = name.trim();
+				if ( name.length() < 1 ) name = null;
+			}
+			subject.setDisplayName(name);
+			subjectRepository.save(subject);
+		}
+		launch.subject = subject;
+
+		// TODO deal with null...
+		Context context = contextRepository.findByContextAndTenant(contextId, tenant);
+		if ( context == null ) {
+System.out.println("Making new context...");
+			context = new Context();
+			context.setContext(contextId);
+			context.setTenant(tenant);
+			context.setTitle(launchJWT.context.title);
+			context.setLabel(launchJWT.context.title);
+			contextRepository.save(context);
+		}
+		launch.context = context;
+
+
 		return launch;
 	}
 	/*

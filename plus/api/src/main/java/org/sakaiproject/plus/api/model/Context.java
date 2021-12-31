@@ -61,4 +61,7 @@ public class Context extends BaseLTI implements PersistableEntity<String> {
     @Column(name = "TITLE", length = 1024, nullable = true)
     private String title;
 
+    @Column(name = "LABEL", length = 1024, nullable = true)
+    private String label;
+
 }

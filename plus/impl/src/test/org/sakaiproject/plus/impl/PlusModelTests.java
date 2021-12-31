@@ -185,6 +185,10 @@ System.out.println("YADA testReceiveJWT");
 		String id_token = getIdToken();
 		JSONObject header = LTI13JwtUtil.jsonJwtHeader(id_token);
 		assertNotNull(header);
+System.out.println("header="+header);
+		String kid = (String) header.get("kid");
+		assertNotNull(kid);
+System.out.println("header="+header);
 		JSONObject body = LTI13JwtUtil.jsonJwtBody(id_token);
 		assertNotNull(body);
 		String rawbody = LTI13JwtUtil.rawJwtBody(id_token);
@@ -233,10 +237,9 @@ System.out.println("launchJWT="+launchJWT);
 			fail("Tenant / LaunchJWT issuer mismatch should throw a runtime exception");
 		} catch (Exception e) { /* no Problem */ }
 
-		String issuer = launchJWT.issuer;
-		String clientId = launchJWT.audience;
 		tenant.setIssuer(launchJWT.issuer);
 		tenant.setClientId(launchJWT.audience);
+		tenant.setDeploymentId(launchJWT.deployment_id);
 		try {
 			launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
 			fail("Valid tenant that is not persisted should throw a runtime exception");
@@ -248,6 +251,10 @@ System.out.println("launchJWT="+launchJWT);
 
 		launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
 System.out.println("launch="+launch);
+		assertNotNull(launch);
+
+		launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
+System.out.println("launch2="+launch);
 		assertNotNull(launch);
 
 	}
