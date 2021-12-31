@@ -26,33 +26,5 @@ import org.sakaiproject.plus.api.model.Score;
 public interface Launch {
 
 	public Tenant getTenant();
-	public void setTenant(Tenant tenant);
-	public String getTenantId();
-	public void setTenantId(String tenantId);
-
-	public Context getContext();
-	public void setContext(Context context);
-	public String getContextId();
-	public void setContextId(String contextId);
-
-	public Subject getSubject();
-	public void setSubject(Subject subject);
-	public String getSubjectId();
-	public void setSubjectId(String subjectId);
-
-	public Link getLink();
-	public void setLink(Link link);
-	public String getLinkId();
-	public void setLinkId(String linkId);
-
-	public LineItem getLineItem();
-	public void setLineItem(LineItem lineItem);
-	public String getLineItemId();
-	public void setLineItemId(String lineItemId);
-
-	public Score getScore();
-	public void setScore(Score score);
-	public String getScoreId();
-	public void setScoreId(String scoreId);
 
 }

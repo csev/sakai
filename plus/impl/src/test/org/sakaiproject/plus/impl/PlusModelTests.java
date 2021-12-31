@@ -18,6 +18,7 @@ package org.sakaiproject.plus.impl;
 import java.time.Instant;
 
 import org.sakaiproject.plus.api.Launch;
+import org.sakaiproject.plus.api.LaunchService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -105,7 +106,7 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 	@Resource private LinkRepository linkRepository;
 	@Resource private LineItemRepository lineItemRepository;
 	@Resource private ScoreRepository scoreRepository;
-	@Resource private Launch launch;
+	@Resource private LaunchService launchService;
 
 	User user1User = null;
 	User user2User = null;
@@ -140,7 +141,6 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		Map<String, String> settings = tenant.getSettings();
 		settings.put("secret", "42");
 		tenantRepository.save(tenant);
-		launch.setTenant(tenant);
 		String tenantId = tenant.getId();
 
 		Optional<Tenant> optTenant = tenantRepository.findById(tenantId);
@@ -151,7 +151,6 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		Subject subject = new Subject("Yada", tenant);
 		subject.setEmail("hirouki@p.com");
 		subjectRepository.save(subject);
-		launch.setSubject(subject);
 
 		Subject newSubject = subjectRepository.findBySubjectAndTenant("Yada", tenant);
 
@@ -159,7 +158,6 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		context.setContext("SI364");
 		context.setTenant(tenant);
 		contextRepository.save(context);
-		launch.setContext(context);
 
 		Context newContext = contextRepository.findByContextAndTenant("SI364", tenant);
 
@@ -167,20 +165,17 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		lineItem.setResourceId("YADA");
 		lineItem.setContext(context);
 		lineItemRepository.save(lineItem);
-		launch.setLineItem(lineItem);
 
 		Link link = new Link();
 		link.setLink("YADA");
 		link.setContext(context);
 		link.setLineItem(lineItem);
 		linkRepository.save(link);
-		launch.setLink(link);
 
 		Score score = new Score();
 		score.setLineItem(lineItem);
 		score.setSubject(subject);
 		scoreRepository.save(score);
-		launch.setScore(score);
 
 	}
 
@@ -199,31 +194,19 @@ System.out.println("YADA testReceiveJWT");
 		ObjectMapper mapper = new ObjectMapper()
 			.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-		LaunchJWT launch = mapper.readValue(rawbody, LaunchJWT.class);
-		assertNotNull(launch);
-System.out.println("launch="+launch);
+		LaunchJWT launchJWT = mapper.readValue(rawbody, LaunchJWT.class);
+		assertNotNull(launchJWT);
+System.out.println("launchJWT="+launchJWT);
 
 		// Make sure funky stuff is ignored
 		String funkybody = rawbody.replace("{\"iss\":", "{\"funky\":\"town\",\"iss\":");
 System.out.println("funkybody="+funkybody);
-		launch = mapper.readValue(funkybody, LaunchJWT.class);
-		assertNotNull(launch);
-System.out.println("launch="+launch);
+		launchJWT = mapper.readValue(funkybody, LaunchJWT.class);
+		assertNotNull(launchJWT);
+System.out.println("launchJWT="+launchJWT);
 
-		String issuer = launch.issuer;
-		String clientId = launch.audience;
-		String subject = launch.subject;
-		String contextId = launch.context.id;
-		String resourceLinkId = launch.resource_link.id;
-		String deploymentId = launch.deployment_id;
-System.out.println(
-		" issuer="+issuer+
-		" clientId="+clientId+
-		" deploymentId="+deploymentId+
-		" contextId="+contextId+
-		" resourceLinkId="+resourceLinkId+
-		" subject="+subject
-);
+		Launch launch = launchService.loadLaunchFromJWT(launchJWT);
+System.out.println("launch="+launch);
 
 	}
 

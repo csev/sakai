@@ -30,13 +30,6 @@ import org.sakaiproject.plus.api.model.Link;
 import org.sakaiproject.plus.api.model.LineItem;
 import org.sakaiproject.plus.api.model.Score;
 
-import org.sakaiproject.plus.api.repository.TenantRepository;
-import org.sakaiproject.plus.api.repository.SubjectRepository;
-import org.sakaiproject.plus.api.repository.ContextRepository;
-import org.sakaiproject.plus.api.repository.LinkRepository;
-import org.sakaiproject.plus.api.repository.LineItemRepository;
-import org.sakaiproject.plus.api.repository.ScoreRepository;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -44,32 +37,22 @@ import lombok.Setter;
 @Setter
 public class LaunchImpl implements org.sakaiproject.plus.api.Launch, java.io.Serializable {
 
-	private transient Tenant tenant = null;
-	private transient Context context = null;
-	private transient Subject subject = null;
-	private transient Link link = null;
+	protected transient Tenant tenant = null;
+	protected transient Context context = null;
+	protected transient Subject subject = null;
+	protected transient Link link = null;
 
 	// Those specifically associated with the launch
-	private transient LineItem lineItem = null;
-	private transient Score score = null;
+	protected transient LineItem lineItem = null;
+	protected transient Score score = null;
 
 	// To make good on the promise of serialization :)
-	private String tenantId = null;
-	private String contextId = null;
-	private String subjectId = null;
-	private String linkId = null;
-	private String lineItemId = null;
-	private String scoreId = null;
-
-    @Resource private SessionFactory sessionFactory;
-
-    @Resource private TenantRepository tenantRepository;
-    @Resource private SubjectRepository subjectRepository;
-    @Resource private ContextRepository contextRepository;
-    @Resource private LinkRepository linkRepository;
-    @Resource private LineItemRepository lineItemRepository;
-    @Resource private ScoreRepository scoreRepository;
-
+	protected String tenantId = null;
+	protected String contextId = null;
+	protected String subjectId = null;
+	protected String linkId = null;
+	protected String lineItemId = null;
+	protected String scoreId = null;
 
 	public Tenant getTenant()
 	{
@@ -78,30 +61,7 @@ public class LaunchImpl implements org.sakaiproject.plus.api.Launch, java.io.Ser
 			System.out.println("Fail");
 			return null;
 		}
-		Optional<Tenant> optTenant = tenantRepository.findById(tenantId);
-        if ( optTenant.isPresent() ) {
-            tenant = optTenant.get();
-			return tenant;
-        } else {
-			System.out.println("Fail");
-			return null;
-		}
-
-	}
-    public void setTenant(Tenant tenant)
-	{
-		this.tenant = tenant;
-		this.tenantId = null;
-		if ( tenant != null) this.tenantId = tenant.getId();
-	} 
-    public String getTenantId()
-	{
-		return tenantId;
-	}
-    public void setTenantId(String tenantId)
-	{
-		this.tenantId = tenantId;
-		this.tenant = null;
+		return null;
 	}
 
 }
