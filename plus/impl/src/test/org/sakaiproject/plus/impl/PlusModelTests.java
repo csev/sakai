@@ -18,7 +18,7 @@ package org.sakaiproject.plus.impl;
 import java.time.Instant;
 
 import org.sakaiproject.plus.api.Launch;
-import org.sakaiproject.plus.api.LaunchService;
+import org.sakaiproject.plus.api.service.LaunchService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -205,8 +205,50 @@ System.out.println("funkybody="+funkybody);
 		assertNotNull(launchJWT);
 System.out.println("launchJWT="+launchJWT);
 
-		Launch launch = launchService.loadLaunchFromJWT(launchJWT);
+		Instant now = Instant.now();
+		Tenant tenant = null;
+		Launch launch = null;
+		try {
+			launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
+			fail("LaunchJWT and tenant both null should throw a runtime exception");
+		} catch (Exception e) { /* no Problem */ }
+
+		tenant = new Tenant();
+		try {
+			launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
+			fail("Tenant without issuer should throw a runtime exception");
+		} catch (Exception e) { /* no Problem */ }
+
+		tenant.setTitle("Yada");
+		tenant.setCreated_at(now);
+		tenant.setOidcAuth("https://www.example.com/auth");
+		tenant.setOidcKeyset("https://www.example.com/keyset");
+		tenant.setOidcToken("https://www.example.com/token");
+		tenant.setDeploymentId("1");
+
+		tenant.setIssuer("wrong");
+		tenant.setClientId("wrong");
+		try {
+			launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
+			fail("Tenant / LaunchJWT issuer mismatch should throw a runtime exception");
+		} catch (Exception e) { /* no Problem */ }
+
+		String issuer = launchJWT.issuer;
+		String clientId = launchJWT.audience;
+		tenant.setIssuer(launchJWT.issuer);
+		tenant.setClientId(launchJWT.audience);
+		try {
+			launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
+			fail("Valid tenant that is not persisted should throw a runtime exception");
+		} catch (Exception e) { /* no Problem */ }
+
+		tenantRepository.save(tenant);
+		String tenantId = tenant.getId();
+		assertNotNull(tenantId);
+
+		launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
 System.out.println("launch="+launch);
+		assertNotNull(launch);
 
 	}
 

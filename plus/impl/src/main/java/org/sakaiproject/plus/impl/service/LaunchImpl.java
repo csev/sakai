@@ -22,6 +22,7 @@ import javax.annotation.Resource;
 import org.hibernate.SessionFactory;
 
 import org.sakaiproject.plus.api.Launch;
+import org.sakaiproject.plus.api.service.LaunchService;
 
 import org.sakaiproject.plus.api.model.Tenant;
 import org.sakaiproject.plus.api.model.Subject;
@@ -30,12 +31,9 @@ import org.sakaiproject.plus.api.model.Link;
 import org.sakaiproject.plus.api.model.LineItem;
 import org.sakaiproject.plus.api.model.Score;
 
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
 public class LaunchImpl implements org.sakaiproject.plus.api.Launch, java.io.Serializable {
+
+	protected LaunchService launchService;
 
 	protected transient Tenant tenant = null;
 	protected transient Context context = null;

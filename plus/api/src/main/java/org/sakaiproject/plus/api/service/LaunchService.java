@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.sakaiproject.plus.api;
+package org.sakaiproject.plus.api.service;
 
 import org.tsugi.lti13.objects.LaunchJWT;
+
+import org.sakaiproject.plus.api.Launch;
+import org.sakaiproject.plus.api.model.Tenant;
 
 public interface LaunchService {
 
 	/*
 	 * Handle the initial launch - creating objects as needed (a.k.a. The BIG LEFT JOIN)
 	 */
-	Launch loadLaunchFromJWT(LaunchJWT tokenBody);
+	Launch loadLaunchFromJWT(LaunchJWT tokenBody, Tenant tenant);
 	/*
 	 * The JSON only contains IDs - the actual objects will be brought in dynamically
 	 */

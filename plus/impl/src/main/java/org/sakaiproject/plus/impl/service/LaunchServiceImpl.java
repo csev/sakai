@@ -24,7 +24,7 @@ import javax.annotation.Resource;
 import org.hibernate.SessionFactory;
 
 import org.sakaiproject.plus.api.Launch;
-import org.sakaiproject.plus.api.LaunchService;
+import org.sakaiproject.plus.api.service.LaunchService;
 
 import org.sakaiproject.plus.api.model.Tenant;
 import org.sakaiproject.plus.api.model.Subject;
@@ -42,7 +42,9 @@ import org.sakaiproject.plus.api.repository.ScoreRepository;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Getter
 @Setter
 public class LaunchServiceImpl implements LaunchService {
@@ -59,10 +61,28 @@ public class LaunchServiceImpl implements LaunchService {
 	/*
 	 * Handle the initial launch - creating objects as needed (a.k.a. The BIG LEFT JOIN)
 	 */
-	public Launch loadLaunchFromJWT(LaunchJWT launchJWT)
+	public Launch loadLaunchFromJWT(LaunchJWT launchJWT, Tenant tenant)
 	{
-		        String issuer = launchJWT.issuer;
+		if ( launchJWT == null || tenant == null ) {
+		   throw new RuntimeException("launchJWT and tenant must be non-null");
+		}
+
+		String issuer = launchJWT.issuer;
         String clientId = launchJWT.audience;
+
+		if ( issuer == null || clientId == null ) {
+		   throw new RuntimeException("LaunchJWT issuer and clientId (audience) must be non-null");
+		}
+
+		if ( ! issuer.equals(tenant.getIssuer()) || ! clientId.equals(tenant.getClientId()) ) {
+		   throw new RuntimeException("issuer and clientId (audience) must match between tenant and LaunchJWT");
+		}
+
+		if ( tenant.getId() == null ) {
+		   throw new RuntimeException("loadLaunchFromJWT requires persisted tenant");
+		}
+
+
         String subject = launchJWT.subject;
         String contextId = launchJWT.context.id;
         String resourceLinkId = launchJWT.resource_link.id;
@@ -75,7 +95,9 @@ System.out.println(
         " resourceLinkId="+resourceLinkId+
         " subject="+subject
 );
-		return null;
+		LaunchImpl launch = new LaunchImpl();
+		launch.launchService = this;
+		return launch;
 	}
 	/*
 	 * The JSON only contains IDs - the actual objects will be brought in dynamically
