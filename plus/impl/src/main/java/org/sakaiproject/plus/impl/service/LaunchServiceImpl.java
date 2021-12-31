@@ -109,18 +109,7 @@ System.out.println("Making new subject...");
 				subject = new Subject(subjectId, tenant);
 				subject.setSubject(subjectId);
 				subject.setEmail(launchJWT.email);
-				String name = launchJWT.name;
-				if ( name == null ) {
-					name = "";
-					if ( launchJWT.given_name != null ) name = launchJWT.given_name;
-					if ( launchJWT.family_name != null ) {
-						if ( name.length() > 0 ) name = name + " ";
-						name = name + launchJWT.family_name;
-					}
-					name = name.trim();
-					if ( name.length() < 1 ) name = null;
-				}
-				subject.setDisplayName(name);
+				subject.setDisplayName(launchJWT.getDisplayName());
 				changed = true;
 			}
 			if ( changed) subjectRepository.save(subject);

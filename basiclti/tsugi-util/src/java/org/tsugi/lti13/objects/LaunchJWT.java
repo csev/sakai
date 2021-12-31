@@ -106,4 +106,23 @@ public class LaunchJWT extends BaseJWT {
 		this.launch_presentation = new LaunchPresentation();
 	}
 
+	// Encode the rules for constructing a name
+	public String getDisplayName() {
+		if ( name != null ) return name;
+
+		String display_name = "";
+        if ( given_name != null ) display_name = given_name;
+        if ( middle_name != null ) {
+            if ( display_name.length() > 0 ) display_name = display_name + " ";
+            display_name = display_name + middle_name;
+        }
+        if ( family_name != null ) {
+            if ( display_name.length() > 0 ) display_name = display_name + " ";
+            display_name = display_name + family_name;
+        }
+        display_name = display_name.trim();
+        if ( display_name.length() < 1 ) display_name = null;
+		return display_name;
+	}
+
 }
