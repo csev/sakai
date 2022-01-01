@@ -31,6 +31,11 @@ import org.sakaiproject.plus.api.model.Link;
 import org.sakaiproject.plus.api.model.LineItem;
 import org.sakaiproject.plus.api.model.Score;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class LaunchImpl implements org.sakaiproject.plus.api.Launch, java.io.Serializable {
 
 	protected LaunchService launchService;
@@ -39,27 +44,5 @@ public class LaunchImpl implements org.sakaiproject.plus.api.Launch, java.io.Ser
 	protected transient Context context = null;
 	protected transient Subject subject = null;
 	protected transient Link link = null;
-
-	// Those specifically associated with the launch
-	protected transient LineItem lineItem = null;
-	protected transient Score score = null;
-
-	// To make good on the promise of serialization :)
-	protected String tenantId = null;
-	protected String contextId = null;
-	protected String subjectId = null;
-	protected String linkId = null;
-	protected String lineItemId = null;
-	protected String scoreId = null;
-
-	public Tenant getTenant()
-	{
-		if ( tenant != null ) return tenant;
-		if ( tenantId == null ) {
-			System.out.println("Fail");
-			return null;
-		}
-		return null;
-	}
 
 }

@@ -26,5 +26,8 @@ import org.sakaiproject.plus.api.model.Score;
 public interface Launch {
 
 	public Tenant getTenant();
+	public Context getContext();
+	public Subject getSubject();
+	public Link getLink();
 
 }

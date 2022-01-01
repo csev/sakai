@@ -23,6 +23,8 @@ import javax.annotation.Resource;
 
 import org.hibernate.SessionFactory;
 
+import org.apache.commons.lang3.StringUtils;
+
 import org.sakaiproject.plus.api.Launch;
 import org.sakaiproject.plus.api.service.LaunchService;
 
@@ -84,9 +86,9 @@ public class LaunchServiceImpl implements LaunchService {
 		}
 
 
-        String contextId = launchJWT.context.id;
+        String contextId = launchJWT.context != null ? launchJWT.context.id : null;
         String subjectId = launchJWT.subject;
-        String linkId = launchJWT.resource_link.id;
+        String linkId =  launchJWT.resource_link != null ? launchJWT.resource_link.id : null;
 System.out.println(
         " issuer="+issuer+
         " clientId="+clientId+
@@ -103,16 +105,25 @@ System.out.println(
 		Subject subject = null;
 		if ( subjectId != null ) {
 			subject = subjectRepository.findBySubjectAndTenant(subjectId, tenant);
-System.out.println("subject="+subject);
 			if ( subject == null ) {
-System.out.println("Making new subject...");
 				subject = new Subject(subjectId, tenant);
 				subject.setSubject(subjectId);
 				subject.setEmail(launchJWT.email);
 				subject.setDisplayName(launchJWT.getDisplayName());
 				changed = true;
+			} else {
+				if ( StringUtils.compare(subject.getEmail(), launchJWT.email) != 0 ) {
+					subject.setEmail(launchJWT.email);
+					changed = true;
+				}
+				if ( StringUtils.compare(subject.getDisplayName(), launchJWT.getDisplayName() ) != 0 ) {
+					subject.setDisplayName(launchJWT.getDisplayName());
+					changed = true;
+				}
 			}
-			if ( changed) subjectRepository.save(subject);
+			if ( changed ) {
+				subjectRepository.save(subject);
+			}
 			launch.subject = subject;
 		}
 
@@ -121,13 +132,21 @@ System.out.println("Making new subject...");
 			context = contextRepository.findByContextAndTenant(contextId, tenant);
 			changed = false;
 			if ( context == null ) {
-System.out.println("Making new context...");
 				context = new Context();
 				context.setContext(contextId);
 				context.setTenant(tenant);
 				context.setTitle(launchJWT.context.title);
-				context.setLabel(launchJWT.context.title);
+				context.setLabel(launchJWT.context.label);
 				changed = true;
+			} else {
+				if ( StringUtils.compare(context.getTitle(), launchJWT.context.title) != 0 ) {
+					context.setTitle(launchJWT.context.title);
+					changed = true;
+				}
+				if ( StringUtils.compare(context.getLabel(), launchJWT.context.label) != 0 ) {
+					context.setLabel(launchJWT.context.label);
+					changed = true;
+				}
 			}
 			if ( changed) contextRepository.save(context);
 			launch.context = context;
@@ -137,13 +156,21 @@ System.out.println("Making new context...");
 			Link link = linkRepository.findByLinkAndContext(linkId, context);
 			changed = false;
 			if ( link == null ) {
-System.out.println("Making new link...");
 				link = new Link();
 				link.setLink(linkId);
 				link.setContext(context);
 				link.setTitle(launchJWT.resource_link.title);
 				link.setDescription(launchJWT.resource_link.description);
 				changed = true;
+			} else {
+				if ( StringUtils.compare(link.getTitle(), launchJWT.resource_link.title) != 0 ) {
+					link.setTitle(launchJWT.resource_link.title);
+					changed = true;
+				}
+				if ( StringUtils.compare(link.getDescription(), launchJWT.resource_link.description) != 0 ) {
+					link.setDescription(launchJWT.resource_link.description);
+					changed = true;
+				}
 			}
 			if ( changed) linkRepository.save(link);
 			launch.link = link;

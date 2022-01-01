@@ -223,7 +223,7 @@ System.out.println("launchJWT="+launchJWT);
 			fail("Tenant without issuer should throw a runtime exception");
 		} catch (Exception e) { /* no Problem */ }
 
-		tenant.setTitle("Yada");
+		tenant.setTitle("Example Tenant");
 		tenant.setCreated_at(now);
 		tenant.setOidcAuth("https://www.example.com/auth");
 		tenant.setOidcKeyset("https://www.example.com/keyset");
@@ -250,12 +250,36 @@ System.out.println("launchJWT="+launchJWT);
 		assertNotNull(tenantId);
 
 		launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
-System.out.println("launch="+launch);
 		assertNotNull(launch);
+		assertEquals(launch.getSubject().getDisplayName(), "Chuck P");
+		assertEquals(launch.getContext().getTitle(), "Yada");
 
 		launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
-System.out.println("launch2="+launch);
 		assertNotNull(launch);
+		assertEquals(launch.getSubject().getDisplayName(), "Chuck P");
+		assertEquals(launch.getContext().getTitle(), "Yada");
+
+		launchJWT.name = "Sakaiger";
+		launchJWT.context.title = "SI664";
+		launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
+		assertNotNull(launch);
+		assertEquals(launch.getSubject().getDisplayName(), "Sakaiger");
+		assertEquals(launch.getContext().getTitle(), "SI664");
+
+		// Construct from first and last
+		launchJWT.name = null;
+		launch = launchService.loadLaunchFromJWT(launchJWT, tenant);
+		assertNotNull(launch);
+		assertEquals(launch.getSubject().getDisplayName(), "Chuck P");
+		assertEquals(launch.getContext().getTitle(), "SI664");
+
+		// Lets load from database
+		Context loadContext = contextRepository.findByContextAndTenant(launch.getContext().getContext(), tenant);
+		assertEquals(launch.getContext().getTitle(), loadContext.getTitle());
+		assertEquals(launch.getContext().getId(), loadContext.getId());
+
+
+
 
 	}
 
