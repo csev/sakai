@@ -85,18 +85,10 @@ public class LaunchServiceImpl implements LaunchService {
 		   throw new RuntimeException("loadLaunchFromJWT requires persisted tenant");
 		}
 
-
         String contextId = launchJWT.context != null ? launchJWT.context.id : null;
         String subjectId = launchJWT.subject;
         String linkId =  launchJWT.resource_link != null ? launchJWT.resource_link.id : null;
-System.out.println(
-        " issuer="+issuer+
-        " clientId="+clientId+
-        " deploymentId="+deploymentId+
-        " contextId="+contextId+
-        " linkId="+linkId+
-        " subjectId="+subjectId
-);
+
 		LaunchImpl launch = new LaunchImpl();
 		launch.launchService = this;
 		launch.tenant = tenant;
