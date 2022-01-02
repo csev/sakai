@@ -26,6 +26,7 @@ import javax.persistence.Index;
 import javax.persistence.UniqueConstraint;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import javax.persistence.CascadeType;
 
@@ -37,40 +38,32 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "PLUS_CONTEXT",
-  indexes = { @Index(columnList = "CONTEXT, TENNANT_GUID") },
-  uniqueConstraints = { @UniqueConstraint(columnNames = { "CONTEXT", "TENNANT_GUID" }) }
+@Table(name = "PLUS_MEMBERSHIP",
+  indexes = { @Index(columnList = "SUBJECT_GUID, CONTEXT_GUID") },
+  uniqueConstraints = { @UniqueConstraint(columnNames = { "SUBJECT_GUID", "CONTEXT_GUID" }) }
 )
 @Getter
 @Setter
-public class Context extends BaseLTI implements PersistableEntity<String> {
+public class Membership extends BaseLTI implements PersistableEntity<String> {
 
     @Id
-    @Column(name = "CONTEXT_GUID", length = 36, nullable = false)
+    @Column(name = "MEMBERSHIP_GUID", length = 36, nullable = false)
     @GeneratedValue(generator = "uuid")
     @GenericGenerator(name = "uuid", strategy = "uuid2")
     private String id;
 
-    @Column(name = "CONTEXT", length = 1024, nullable = false)
-    private String context;
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @Column(name = "SUBJECT_GUID", nullable = false)
+    private Subject subject;
 
-	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@JoinColumn(name = "TENNANT_GUID", nullable = false)
-	private Tenant tenant;
+	@ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+	@JoinColumn(name = "CONTEXT_GUID", nullable = false)
+	private Context context;
 
-    @Column(name = "TITLE", length = 4000, nullable = true)
-    private String title;
+    @Column(name = "ROLE", nullable = true)
+    private Integer role;
 
-    @Column(name = "LABEL", length = 4000, nullable = true)
-    private String label;
-
-	// launchjwt.endpoint.lineitems
-    @Column(name = "LINEITEMS", length = 4000, nullable = true)
-    private String lineItems;
-
-	// launchjwt.names_and_roles.context_memberships_url
-    @Column(name = "CONTEXT_MEMBERSHIPS", length = 4000, nullable = true)
-    private String contextMemberships;
-
+    @Column(name = "ROLE_OVERRIDE", nullable = true)
+    private Integer roleOveride;
 
 }

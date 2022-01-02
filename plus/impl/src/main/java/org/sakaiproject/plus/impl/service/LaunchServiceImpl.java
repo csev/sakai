@@ -129,6 +129,8 @@ public class LaunchServiceImpl implements LaunchService {
 				context.setTenant(tenant);
 				context.setTitle(launchJWT.context.title);
 				context.setLabel(launchJWT.context.label);
+				context.setLineItems(launchJWT.endpoint.lineitems);
+				context.setContextMemberships(launchJWT.names_and_roles.context_memberships_url);
 				changed = true;
 			} else {
 				if ( StringUtils.compare(context.getTitle(), launchJWT.context.title) != 0 ) {
@@ -137,6 +139,14 @@ public class LaunchServiceImpl implements LaunchService {
 				}
 				if ( StringUtils.compare(context.getLabel(), launchJWT.context.label) != 0 ) {
 					context.setLabel(launchJWT.context.label);
+					changed = true;
+				}
+				if ( StringUtils.compare(context.getLineItems(), launchJWT.endpoint.lineitems) != 0 ) {
+					context.setLineItems(launchJWT.endpoint.lineitems);
+					changed = true;
+				}
+				if ( StringUtils.compare(context.getContextMemberships(), launchJWT.names_and_roles.context_memberships_url) != 0 ) {
+					context.setContextMemberships(launchJWT.names_and_roles.context_memberships_url);
 					changed = true;
 				}
 			}
