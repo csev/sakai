@@ -17,7 +17,7 @@
  * limitations under the License.
  */
 
-package org.sakaiproject.blti;
+package org.sakaiproject.plus;
 
 import java.io.IOException;
 import java.io.PrintWriter;

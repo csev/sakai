@@ -19,7 +19,7 @@
   <modules>
     <module>api</module>
     <module>impl</module>
-    <module>servlet</module>
+    <module>provider</module>
   </modules>
 
   <name>sakai-plus-base</name>

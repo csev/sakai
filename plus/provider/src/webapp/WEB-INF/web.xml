@@ -19,12 +19,12 @@
 
   <servlet>
     <servlet-name>ProviderServlet</servlet-name>
-    <servlet-class>org.sakaiproject.blti.ProviderServlet</servlet-class>
+    <servlet-class>org.sakaiproject.plus.ProviderServlet</servlet-class>
   </servlet>
 
   <servlet-mapping>
     <servlet-name>ProviderServlet</servlet-name>
-    <url-pattern>/provider/*</url-pattern>
+    <url-pattern>/*</url-pattern>
   </servlet-mapping>
   
   <listener>
