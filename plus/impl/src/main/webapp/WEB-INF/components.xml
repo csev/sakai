@@ -58,6 +58,12 @@
     <bean id="org.sakaiproject.plus.api.LaunchService"
         class="org.sakaiproject.plus.impl.service.LaunchServiceImpl">
         <property name="sessionFactory" ref="org.sakaiproject.springframework.orm.hibernate.GlobalSessionFactory"/>
+        <property name="tenantRepository" ref="org.sakaiproject.plus.api.repository.TenantRepository"/>
+        <property name="subjectRepository" ref="org.sakaiproject.plus.api.repository.SubjectRepository"/>
+        <property name="contextRepository" ref="org.sakaiproject.plus.api.repository.ContextRepository"/>
+        <property name="linkRepository" ref="org.sakaiproject.plus.api.repository.LinkRepository"/>
+        <property name="lineItemRepository" ref="org.sakaiproject.plus.api.repository.LineItemRepository"/>
+        <property name="scoreRepository" ref="org.sakaiproject.plus.api.repository.ScoreRepository"/>
     </bean>
 
 </beans>
