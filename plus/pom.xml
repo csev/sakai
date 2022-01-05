@@ -48,7 +48,6 @@
         <groupId>org.sakaiproject.basiclti</groupId>
         <artifactId>basiclti-util</artifactId>
         <version>${project.version}</version>
-        <scope>provided</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>
