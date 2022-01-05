@@ -77,11 +77,20 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-core</artifactId>
     </dependency>
-    <dependency>
-        <groupId>org.sakaiproject.basiclti</groupId>
-        <artifactId>basiclti-util</artifactId>
-        <version>${sakai.version}</version>
-    </dependency>
+        <dependency>
+            <groupId>org.sakaiproject.basiclti</groupId>
+            <artifactId>basiclti-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.sakaiproject.basiclti</groupId>
+            <artifactId>basiclti-util</artifactId>
+            <version>${sakai.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.sakaiproject.basiclti</groupId>
+            <artifactId>basiclti-common</artifactId>
+            <version>${sakai.version}</version>
+        </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
