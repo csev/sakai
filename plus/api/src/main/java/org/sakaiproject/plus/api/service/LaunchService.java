@@ -16,10 +16,10 @@
 
 package org.sakaiproject.plus.api.service;
 
-import org.tsugi.lti13.objects.LaunchJWT;
-
 import org.sakaiproject.plus.api.Launch;
 import org.sakaiproject.plus.api.model.Tenant;
+
+import org.tsugi.lti13.objects.LaunchJWT;
 
 public interface LaunchService {
 
