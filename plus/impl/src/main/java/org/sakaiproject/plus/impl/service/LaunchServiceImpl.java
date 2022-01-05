@@ -22,8 +22,6 @@ import java.util.Optional;
 
 import javax.annotation.Resource;
 
-import org.hibernate.SessionFactory;
-
 import org.apache.commons.lang3.StringUtils;
 
 import org.sakaiproject.plus.api.Launch;
@@ -50,8 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Setter
 public class LaunchServiceImpl implements LaunchService {
-
-    @Resource private SessionFactory sessionFactory;
 
     @Resource private TenantRepository tenantRepository;
     @Resource private SubjectRepository subjectRepository;

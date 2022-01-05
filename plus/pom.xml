@@ -44,11 +44,6 @@
         <version>${project.version}</version>
         <scope>provided</scope>
       </dependency>
-      <dependency>
-        <groupId>org.sakaiproject.basiclti</groupId>
-        <artifactId>basiclti-util</artifactId>
-        <version>${project.version}</version>
-      </dependency>
     </dependencies>
   </dependencyManagement>
 

@@ -80,6 +80,7 @@
     <dependency>
         <groupId>org.sakaiproject.basiclti</groupId>
         <artifactId>basiclti-util</artifactId>
+        <version>${sakai.version}</version>
     </dependency>
     <dependency>
       <groupId>javax.servlet</groupId>

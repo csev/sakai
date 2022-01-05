@@ -57,7 +57,6 @@
 
     <bean id="org.sakaiproject.plus.api.service.LaunchService"
         class="org.sakaiproject.plus.impl.service.LaunchServiceImpl">
-        <property name="sessionFactory" ref="org.sakaiproject.springframework.orm.hibernate.GlobalSessionFactory"/>
         <property name="tenantRepository" ref="org.sakaiproject.plus.api.repository.TenantRepository"/>
         <property name="subjectRepository" ref="org.sakaiproject.plus.api.repository.SubjectRepository"/>
         <property name="contextRepository" ref="org.sakaiproject.plus.api.repository.ContextRepository"/>
