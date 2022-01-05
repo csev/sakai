@@ -2,20 +2,7 @@
 <web-app id="WebApp_9" version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" 
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
     xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
-  <display-name>IMS BLTI Portlet</display-name>
-
-  <filter>
-    <filter-name>sakai.request</filter-name>
-    <filter-class>org.sakaiproject.util.RequestFilter</filter-class>
-  </filter>
-
-  <filter-mapping>
-    <filter-name>sakai.request</filter-name>
-    <url-pattern>/*</url-pattern>
-    <dispatcher>REQUEST</dispatcher>
-    <dispatcher>FORWARD</dispatcher>
-    <dispatcher>INCLUDE</dispatcher>
-  </filter-mapping>
+  <display-name>IMS Plus Servlet</display-name>
 
   <servlet>
     <servlet-name>ProviderServlet</servlet-name>
