@@ -175,6 +175,8 @@ public class ProviderServlet extends HttpServlet {
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 
+System.out.println("PROVIDER INIT");
+
 		super.init(config);
 
         siteEmailPreferenceSetter = (SiteEmailPreferenceSetter) ComponentManager.getInstance().get("org.sakaiproject.lti.api.SiteEmailPreferenceSetter");
@@ -229,6 +231,7 @@ public class ProviderServlet extends HttpServlet {
 	}
 	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+System.out.println("DOGET "+request.getPathInfo());
 
 		doPost(request, response);
 	}
