@@ -127,10 +127,18 @@
   </dependencies>
 
   <build>
+    <sourceDirectory>src/main/java</sourceDirectory>
     <plugins>
+      <plugin>
+        <groupId>org.sakaiproject.maven.plugins</groupId>
+        <artifactId>sakai</artifactId>
+        <configuration>
+          <warSourceDirectory>src/main/webapp</warSourceDirectory>
+        </configuration>
+      </plugin>
     </plugins>
     <testResources>
-      <testResource>
+       <testResource>
         <directory>${basedir}/src/main/webapp</directory>
       </testResource>
       <testResource>
