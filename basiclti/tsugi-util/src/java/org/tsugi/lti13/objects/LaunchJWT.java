@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 
-import javax.annotation.Generated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -14,7 +12,6 @@ import com.fasterxml.jackson.databind.ser.std.MapSerializer;
 import org.tsugi.lti13.LTI13ConstantsUtil;
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
-@Generated("com.googlecode.jsonschema2pojo")
 
 public class LaunchJWT extends BaseJWT {
 

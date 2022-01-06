@@ -3,14 +3,11 @@ package org.tsugi.lti13.objects;
 import java.util.List;
 import java.util.ArrayList;
 
-import javax.annotation.Generated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @JsonSerialize(include = JsonSerialize.Inclusion.NON_NULL)
-@Generated("com.googlecode.jsonschema2pojo")
 
 /*
  * user_id (Required): id of the graded user, as identified by sub claim for launches done by that user.
