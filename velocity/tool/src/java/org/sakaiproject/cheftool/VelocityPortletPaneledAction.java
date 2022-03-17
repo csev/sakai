@@ -599,6 +599,13 @@ public abstract class VelocityPortletPaneledAction extends ToolServlet
 			// Tool tool = (Tool) req.getAttribute(ATTR_TOOL);
 			// TODO: redirect url? pannel? placement id?
 			String url = Web.returnUrl(req, null);
+System.out.println("processAction url="+url);
+System.out.println("processAction req="+req.getRequestURI());
+System.out.println("processAction cpath="+req.getContextPath());
+System.out.println("processAction spath="+req.getServletPath());
+
+			url = RequestFilter.serverUrl(req) + req.getRequestURI();
+System.out.println("processAction url2="+url);
 			
 			String panel = ((ParameterParser) req.getAttribute(ATTR_PARAMS)).getString(ActionURL.PARAM_PANEL);
 			String newPanel = (String) getState(req).getAttribute(STATE_NEW_PANEL);
@@ -613,6 +620,7 @@ public abstract class VelocityPortletPaneledAction extends ToolServlet
 				panel = panel.replaceAll("[\r\n]","");
 			}
 			String redirect = url + "?" + ActionURL.PARAM_PANEL + "=" + panel;
+System.out.println("processAction redirect="+url);
 
 			try
 			{
