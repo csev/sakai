@@ -2,8 +2,6 @@
 TODO LIST
 =========
 
-Add isDraft() indicator to Tenant List in Admin UI
-
 Make tool useful for instructors
 
 Make sure that due dates flow - Canvas especially
@@ -29,7 +27,7 @@ Build S.P.I.D. and S.P.U.D. - Look for or make standard pie chart
 
 o.s.u.ResourceLoader.getString bundle 'Messages'  missing key: 'Missing Sakai Session'
 
-Finish delete comment with Adrian and then re-merge to plus
+Finish delete comment PR with Adrian and then re-merge to plus
 https://sakaiproject.atlassian.net/browse/SAK-47279
 
 DONE
@@ -38,6 +36,8 @@ DONE
 When auto-provisioning set the "Tool Supports LTI 1.3"
 
 Teach admin tool about the setting - add message if not enabled.
+
+Add isDraft() indicator to Tenant List in Admin UI
 
 
 
