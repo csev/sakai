@@ -108,13 +108,6 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 public class PlusServiceImpl implements PlusService {
 
-	public final String PLUS_PROVIDER_ENABLED = "plus.provider.enabled";
-	public final String PLUS_PROVIDER_ENABLED_DEFAULT = "true";
-	public final String PLUS_PROVIDER_VERBOSE = "plus.provider.verbose";
-	public final String PLUS_PROVIDER_VERBOSE_DEFAULT = "false";
-	public final String PLUS_ROSTER_SYCHRONIZATION = "plus.roster.synchronization";
-	public final boolean PLUS_ROSTER_SYCHRONIZATION_DEFAULT = false;
-
 	@Autowired private TenantRepository tenantRepository;
 	@Autowired private SubjectRepository subjectRepository;
 	@Autowired private ContextRepository contextRepository;
@@ -140,7 +133,7 @@ public class PlusServiceImpl implements PlusService {
 	 */
 	public boolean enabled()
 	{
-		String enabled = serverConfigurationService.getString(PLUS_PROVIDER_ENABLED, PLUS_PROVIDER_ENABLED_DEFAULT);
+		String enabled = serverConfigurationService.getString(PlusService.PLUS_PROVIDER_ENABLED, PlusService.PLUS_PROVIDER_ENABLED_DEFAULT);
 		return !("false".equals(enabled));
 	}
 
@@ -186,7 +179,7 @@ public class PlusServiceImpl implements PlusService {
 	public boolean verbose()
 	{
 		if ( log.isDebugEnabled() ) return true;
-		String verbose = serverConfigurationService.getString(PLUS_PROVIDER_VERBOSE, PLUS_PROVIDER_VERBOSE_DEFAULT);
+		String verbose = serverConfigurationService.getString(PlusService.PLUS_PROVIDER_VERBOSE, PlusService.PLUS_PROVIDER_VERBOSE_DEFAULT);
 		return "true".equals(verbose);
 	}
 
@@ -508,7 +501,7 @@ public class PlusServiceImpl implements PlusService {
 
 		log.debug("synchSiteMemberships");
 
-		if (!serverConfigurationService.getBoolean(PLUS_ROSTER_SYCHRONIZATION, PLUS_ROSTER_SYCHRONIZATION_DEFAULT)) {
+		if (!serverConfigurationService.getBoolean(PlusService.PLUS_ROSTER_SYCHRONIZATION, PlusService.PLUS_ROSTER_SYCHRONIZATION_DEFAULT)) {
 			log.info("LTI Memberships synchronization disabled.");
 			return;
 		}
