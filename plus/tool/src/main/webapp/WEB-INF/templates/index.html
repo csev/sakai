@@ -10,6 +10,7 @@
     <script>includeLatestJQuery('conversations');</script>
     <div class="portletBody">
         <h1 th:text="#{plus.tool.title.tenants}">Tenants</h1>
+        <p th:unless="${enabled}" th:text="#{plus.tool.not.enabled}" class="sak-banner-error">Not Enabled</p>
         <p><a class="btn btn-info" th:href="@{/create}" th:text="#{plus.tool.addtenant}">Add Tenant</a></p>
         <ul>
         <li th:each="tenant: ${tenants}">

@@ -37,7 +37,13 @@ import org.sakaiproject.lti.api.BLTIProcessor;
 
 public interface PlusService {
 
-	static final String PLUS_PROPERTY = "plus_site";
+	public static final String PLUS_PROPERTY = "plus_site";
+	public static final String PLUS_PROVIDER_ENABLED = "plus.provider.enabled";
+	public static final String PLUS_PROVIDER_ENABLED_DEFAULT = "true";
+	public static final String PLUS_PROVIDER_VERBOSE = "plus.provider.verbose";
+	public static final String PLUS_PROVIDER_VERBOSE_DEFAULT = "false";
+	public static final String PLUS_ROSTER_SYCHRONIZATION = "plus.roster.synchronization";
+	public static final boolean PLUS_ROSTER_SYCHRONIZATION_DEFAULT = false;
 
 	public enum ProcessingState {
 		beforeValidation, afterValidation, afterUserCreation, afterLogin, afterSiteCreation,

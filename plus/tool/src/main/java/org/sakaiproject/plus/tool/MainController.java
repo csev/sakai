@@ -72,7 +72,7 @@ public class MainController {
 	private LTIService ltiService;
 
 	@Autowired
-	private ServerConfigurationService serverConfigurationServicerverConfigurationService;
+	private ServerConfigurationService serverConfigurationService;
 
 	@Autowired
 	private PlusService plusService;
@@ -85,6 +85,7 @@ public class MainController {
 		loadModel(model, request);
 		Iterable<Tenant> tenants = tenantRepository.findAll();
 		model.addAttribute("tenants", tenants);
+		model.addAttribute("enabled",  Boolean.valueOf(plusService.enabled()));
 		return "index";
 	}
 
@@ -286,7 +287,7 @@ public class MainController {
 		Placement placement = toolManager.getCurrentPlacement();
 		if ( ! ltiService.isAdmin(placement.getContext()) ) {
 			log.error("Attempt to run PlusAdmin outside of admin");
-			throw new MissingSessionException("Must be administrator to manage Plus");
+			throw new MissingSessionException("Must be administrator to manage SakaiPlus");
 		}
 
 		return session;
