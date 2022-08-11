@@ -2,6 +2,8 @@
 TODO LIST
 =========
 
+Make sure the due date moves across
+
 Make tool useful for instructors
 
 Make sure that due dates flow - Canvas especially
