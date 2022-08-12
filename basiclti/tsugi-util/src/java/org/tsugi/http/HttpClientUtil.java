@@ -112,14 +112,26 @@ public class HttpClientUtil {
 		return response;
 	}
 
+	// Convenience method
 	public static HttpResponse<String> sendPost(String url, Map<String, String> data, Map<String, String> headers, StringBuffer dbs) throws Exception {
+		return sendBody("POST", url, data, headers, dbs);
+	}
+
+	// Convenience method
+	public static HttpResponse<String> sendPost(String url, String data, Map<String, String> headers, StringBuffer dbs) throws Exception {
+		return sendBody("POST", url, data, headers, dbs);
+	}
+
+	// Key/value body
+	public static HttpResponse<String> sendBody(String method, String url, Map<String, String> data, Map<String, String> headers, StringBuffer dbs) throws Exception {
 		HttpRequest.BodyPublisher body = buildFormDataFromMap(data, dbs);
 		if ( headers == null ) headers = new HashMap<String, String>();
 		if ( headers.get("Content-Type") == null ) headers.put("Content-Type", "application/x-www-form-urlencoded");
-		return sendPost(url, body, headers, dbs);
+		return sendBody(method, url, body, headers, dbs);
 	}
 
-	public static HttpResponse<String> sendPost(String url, String data, Map<String, String> headers, StringBuffer dbs) throws Exception {
+	// Straight up text body
+	public static HttpResponse<String> sendBody(String method, String url, String data, Map<String, String> headers, StringBuffer dbs) throws Exception {
 		if ( dbs != null && data != null && data.length() > 0 ) {
 			dbs.append("sendPost data\n");
 			dbs.append(StringUtils.truncate(data, 1000));
@@ -128,19 +140,21 @@ public class HttpClientUtil {
 
 		HttpRequest.BodyPublisher body = HttpRequest.BodyPublishers.ofString(data);
 		if ( headers == null ) headers = new HashMap<String, String>();
-		return sendPost(url, body, headers, dbs);
+		return sendBody(method, url, body, headers, dbs);
 	}
 
-	public static HttpResponse<String> sendPost(String url, HttpRequest.BodyPublisher body, Map<String, String> headers, StringBuffer dbs) throws Exception {
+	public static HttpResponse<String> sendBody(String method, String url, HttpRequest.BodyPublisher body, Map<String, String> headers, StringBuffer dbs) throws Exception {
 
 		HttpRequest.Builder builder = HttpRequest.newBuilder()
-			.POST(body)
+			.method(method, body)
 			// .timeout(10)
 			.uri(URI.create(url))
 			.header("User-Agent", "org.tsugi.http.HttpClientUtil web service request");
 
 		if ( dbs != null ) {
-			dbs.append("sendPost url ");
+			dbs.append("send");
+			dbs.append(method);
+			dbs.append(" url ");
 			dbs.append(url);
 			dbs.append("\n");
 		}

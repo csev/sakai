@@ -32,6 +32,8 @@ o.s.u.ResourceLoader.getString bundle 'Messages'  missing key: 'Missing Sakai Se
 Finish delete comment PR with Adrian and then re-merge to plus
 https://sakaiproject.atlassian.net/browse/SAK-47279
 
+Make verbose nicer for Earle (i.e. no System.out.println)
+
 DONE
 ====
 
