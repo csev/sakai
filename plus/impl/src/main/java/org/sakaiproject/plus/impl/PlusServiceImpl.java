@@ -777,6 +777,8 @@ public class PlusServiceImpl implements PlusService {
 	public String createLineItem(Site site, Long assignmentId,
 		final org.sakaiproject.grading.api.Assignment assignmentDefinition)
 	{
+		Long XassignmentId = assignmentDefinition.getId();
+System.out.println("createLineItem site="+site.getId()+" XassignmentId="+XassignmentId);
 		String contextGuid = site.getId();
 		Optional<Context> optContext = contextRepository.findById(contextGuid);
 		Context context = null;
@@ -891,8 +893,10 @@ public class PlusServiceImpl implements PlusService {
 		headers.put("Authorization", "Bearer "+lineItemsAccessToken.access_token);
 		headers.put("Content-Type", LineItem.MIME_TYPE);
 
+		String method = "POST";
+
 		try {
-			HttpResponse<String> response = HttpClientUtil.sendPost(lineItemsUrl, body, headers, dbs);
+			HttpResponse<String> response = HttpClientUtil.sendBody(method, lineItemsUrl, body, headers, dbs);
 			body = response.body();
 			dbs.append("response body\n");
 			dbs.append(StringUtils.truncate(body, 1000));
@@ -917,13 +921,13 @@ public class PlusServiceImpl implements PlusService {
 			LineItem returnedItem = mapper.readValue(body, LineItem.class);
 
 			if ( returnedItem != null ) {
-				String retval = returnedItem.id;
-				if ( isNotEmpty(retval) ) {
-					dbli.setStatus("created lineitem id="+retval);
+				String lineItemId = returnedItem.id;
+				if ( isNotEmpty(lineItemId) ) {
+					dbli.setStatus("created lineitem id="+lineItemId);
 					dbli.setSuccess(Boolean.TRUE);
 					if ( verbose(tenant) ) dbli.setDebugLog(dbs.toString());
 					lineItemRepository.save(dbli);
-					return retval;
+					return lineItemId; // Caller saves this as appropriate
 				}
 				dbli.setStatus("did not find returned lineitem id");
 				dbli.setDebugLog(dbs.toString());
@@ -959,6 +963,221 @@ public class PlusServiceImpl implements PlusService {
 		return null;
 	}
 
+	/*
+	 * Update a lineItem associated with a gradebook Column
+	 */
+	public String updateLineItem(Site site,
+		final org.sakaiproject.grading.api.Assignment assignmentDefinition)
+	{
+		if ( assignmentDefinition == null ) return null;
+		Long assignmentId = assignmentDefinition.getId();
+System.out.println("updateLineItem site="+site.getId()+" assignmentId="+assignmentId);
+		String lineItemId =  assignmentDefinition.getLineItem();
+System.out.println("lineItemId="+lineItemId);
+
+		String contextGuid = site.getId();
+		Optional<Context> optContext = contextRepository.findById(contextGuid);
+		Context context = null;
+		if ( optContext.isPresent() ) {
+			context = optContext.get();
+		}
+
+		if ( context == null ) {
+			log.info("Context notfound {}", contextGuid);
+			return null;
+		}
+
+		String tenantGuid = context.getTenant().getId();
+		String lineItemsUrl	= context.getLineItems();
+
+		if (isEmpty(tenantGuid)) {
+			log.info("Context {} does not have a tenant.  Scores will NOT be synchronized.", contextGuid);
+			return null;
+		}
+
+		if (isEmpty(lineItemsUrl)) {
+			log.info("Context {} does not have LineItems URL.  Scores will NOT be synchronized.", contextGuid);
+			return null;
+		}
+
+		// Load the Tenant
+		Optional<Tenant> optTenant = tenantRepository.findById(tenantGuid);
+		Tenant tenant = null;
+		if ( optTenant.isPresent() ) {
+			tenant = optTenant.get();
+		}
+
+		if ( tenant == null ) {
+			log.info("Tenant notfound {}", tenantGuid);
+			return null;
+		}
+
+		String clientId = tenant.getClientId();
+		String deploymentId = tenant.getDeploymentId();
+		String oidcTokenUrl = tenant.getOidcToken();
+		String oidcAudience = tenant.getOidcAudience();
+		if ( isEmpty(oidcAudience) ) oidcAudience = oidcTokenUrl;
+		boolean trustEmail = ! Boolean.FALSE.equals(tenant.getTrustEmail());
+
+		if (isEmpty(clientId)) {
+			log.info("Tenant {} does not have clientId.  Scores will NOT be synchronized.", tenantGuid);
+			return null;
+		}
+
+		if (isEmpty(deploymentId)) {
+			log.info("Tenant {} does not have deploymentId.  Scores will NOT be synchronized.", tenantGuid);
+			return null;
+		}
+
+		if (isEmpty(oidcTokenUrl)) {
+			log.info("Tenant {} does not have an OIDC Token URL.  Scores will NOT be synchronized.", contextGuid);
+			return null;
+		}
+
+		// Create the lineItem to send.
+		LineItem li = new LineItem();
+		li.scoreMaximum = assignmentDefinition.getPoints();
+		li.label = assignmentDefinition.getName();
+		li.tag = "42";
+		li.resourceId = assignmentId.toString();
+		// li.startDateTime
+		Date dueDate = assignmentDefinition.getDueDate();
+		if ( dueDate != null ) li.endDateTime = BasicLTIUtil.getISO8601(dueDate);
+		String body = li.prettyPrintLog();
+
+		// In Update
+		// Check if we already have a lineitem in our database
+		org.sakaiproject.plus.api.model.LineItem dbli = null;
+		Optional<org.sakaiproject.plus.api.model.LineItem> optLineItem = lineItemRepository.findById(assignmentId);
+		String restEndPoint = lineItemsUrl;
+		String method = "POST";
+		if ( optLineItem.isPresent() ) {
+			dbli = optLineItem.get();
+			restEndPoint = lineItemId;
+			method = "PUT";
+		} else {
+			dbli = new org.sakaiproject.plus.api.model.LineItem();
+		}
+System.out.println("restEndPoint="+restEndPoint);
+
+		// Track this in our local database including success / failure of the LMS interaction
+		dbli.setId(assignmentId);
+		dbli.setContext(context);
+		dbli.setScoreMaximum(li.scoreMaximum);
+		dbli.setLabel(li.label);
+		dbli.setTag(li.tag);
+		dbli.setResourceId(li.resourceId);
+		if ( dueDate != null ) dbli.setEndDateTime(dueDate.toInstant());
+		dbli.setUpdatedAt(Instant.now());
+		dbli.setSentAt(Instant.now());
+		dbli.setSuccess(Boolean.FALSE);
+		dbli.setStatus(null);
+		dbli.setDebugLog(null);
+
+		ContextLog cLog = new ContextLog();
+		cLog.setContext(context);
+		cLog.setType(ContextLog.LOG_TYPE.LineItem_TOKEN);
+		cLog.setAction("createLineItem assignmentId="+assignmentId+" label="+li.label+" scoreMaximum="+li.scoreMaximum+" dueDate="+dueDate);
+
+		// Looks like we have the requisite strings in variables :)
+		// https://www.imsglobal.org/spec/lti-ags/v2p0/#creating-a-new-line-item
+		KeyPair keyPair = SakaiKeySetUtil.getCurrent();
+		StringBuffer dbs = new StringBuffer();
+		AccessToken lineItemsAccessToken = LTI13AccessTokenUtil.getLineItemsToken(oidcTokenUrl, keyPair, clientId, deploymentId, oidcAudience, dbs);
+		if ( lineItemsAccessToken == null || isEmpty(lineItemsAccessToken.access_token) ) {
+			dbli.setStatus("Could not get LineItems token from "+oidcTokenUrl);
+			dbli.setDebugLog(dbs.toString());
+			lineItemRepository.save(dbli);
+			log.error("Could not retrieve lineItems token from {}.  Scores will NOT be synchronized.", oidcTokenUrl);
+			log.error(dbs.toString());
+			cLog.setStatus(dbli.getStatus());
+			cLog.setDebugLog(dbli.getDebugLog());
+			contextLogRepository.save(cLog);
+			return null;
+		}
+		dbs = new StringBuffer();
+		dbs.append("Sending LineItem\n");
+
+		// lineItem
+		Map<String, String> headers = new TreeMap<String, String>();
+		headers.put("Authorization", "Bearer "+lineItemsAccessToken.access_token);
+		headers.put("Content-Type", LineItem.MIME_TYPE);
+
+		try {
+			HttpResponse<String> response = HttpClientUtil.sendBody(method, restEndPoint, body, headers, dbs);
+			body = response.body();
+			dbs.append("response body\n");
+			dbs.append(StringUtils.truncate(body, 1000));
+
+			if ( verbose(tenant) ) System.out.println(dbs.toString());
+		} catch (Exception e) {
+			dbli.setStatus("Error creating lineItem at "+lineItemsUrl+" "+e.getMessage());
+			dbli.setDebugLog(dbs.toString());
+			log.error(dbs.toString());
+			log.error(dbli.getStatus());
+			lineItemRepository.save(dbli);
+
+			cLog.setStatus(dbli.getStatus());
+			cLog.setDebugLog(dbli.getDebugLog());
+			contextLogRepository.save(cLog);
+			return null;
+		}
+System.out.println("BODY="+body);
+
+		// Create and configure an ObjectMapper instance
+		ObjectMapper mapper = JacksonUtil.getLaxObjectMapper();
+		try {
+			LineItem returnedItem = mapper.readValue(body, LineItem.class);
+
+			if ( returnedItem != null ) {
+				lineItemId = returnedItem.id;
+				if ( isNotEmpty(lineItemId) ) {
+					dbli.setStatus("created lineitem id="+lineItemId);
+					dbli.setSuccess(Boolean.TRUE);
+					if ( verbose(tenant) ) dbli.setDebugLog(dbs.toString());
+					lineItemRepository.save(dbli);
+					return lineItemId;
+				}
+				dbli.setStatus("did not find returned lineitem id");
+				dbli.setDebugLog(dbs.toString());
+				lineItemRepository.save(dbli);
+
+				cLog.setStatus(dbli.getStatus());
+				cLog.setType(ContextLog.LOG_TYPE.LineItem_ERROR);
+				cLog.setDebugLog(dbli.getDebugLog());
+				contextLogRepository.save(cLog);
+			}
+		} catch ( Exception e ) {
+			// If the PUT gave us no valid data it is no big deal
+			if ( method.equals("PUT") ) {
+				dbli.setStatus("No lineItem response to PUT at "+lineItemsUrl+" "+e.getMessage());
+				log.debug(dbs.toString());
+				log.debug(dbli.getStatus());
+			} else {
+				dbli.setStatus("Error parsing lineItem response to POST at "+lineItemsUrl+" "+e.getMessage());
+				log.error(dbs.toString());
+				log.error(dbli.getStatus());
+			}
+			dbli.setDebugLog(dbs.toString());
+			lineItemRepository.save(dbli);
+
+			cLog.setStatus(dbli.getStatus());
+			cLog.setType(ContextLog.LOG_TYPE.LineItem_ERROR);
+			cLog.setDebugLog(dbli.getDebugLog());
+			contextLogRepository.save(cLog);
+			return null;
+		}
+
+		// Store this locally
+		lineItemRepository.save(dbli);
+
+		cLog.setSuccess(Boolean.TRUE);
+		cLog.setDebugLog(dbli.getDebugLog());
+		cLog.setType(ContextLog.LOG_TYPE.LineItem_CREATE);
+		contextLogRepository.save(cLog);
+
+		return null;
+	}
 	/*
 	 * Send a score to the calling LMS
 	 */
@@ -1098,7 +1317,7 @@ System.out.println("comment="+comment);
 		dbs.append("Sending score\n");
 
 		 try {
-			HttpResponse<String> response = HttpClientUtil.sendPost(scoreUrl, body, headers, dbs);
+			HttpResponse<String> response = HttpClientUtil.sendBody("POST", scoreUrl, body, headers, dbs);
 			body = response.body();
 			dbs.append("response body\n");
 			dbs.append(StringUtils.truncate(body, 1000));

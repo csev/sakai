@@ -127,6 +127,12 @@ public interface PlusService {
 		final org.sakaiproject.grading.api.Assignment assignmentDefinition);
 
 	/*
+	 * Update a lineItem for a gradebook Column
+	 */
+	String updateLineItem(Site site,
+		final org.sakaiproject.grading.api.Assignment assignmentDefinition);
+
+	/*
 	 * Send a score to the calling LMS
 	 */
 	// https://www.imsglobal.org/spec/lti-ags/v2p0#score-publish-service

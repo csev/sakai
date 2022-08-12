@@ -324,7 +324,7 @@ public class LTI13Servlet extends HttpServlet {
 
 		String[] parts = uri.split("/");
 
-		// /imsblis/lti13/lineitems/{signed-placement}/{lineitem-id}
+		// /imsblis/lti13/lineitems/{signed-placement}
 		if (parts.length == 5 && "lineitem".equals(parts[3])) {
 			log.error("Attempt to modify on-demand line item request={}", uri);
 			LTI13Util.return400(response, "Attempt to modify an 'on-demand' line item");
@@ -1941,23 +1941,14 @@ public class LTI13Servlet extends HttpServlet {
 			return;
 		}
 
-		// TODO: Does PUT need to return the entire line item - I think the code below
-		// actually is wrong - we just need to do a GET to get the entire line
-		// item after the PUT.  It seems wasteful to always do the GET after PUT
-		// when the tool can do it if it wants the newly updated item.  So
-		// For now I am sending nothing back for a pUT request.
-		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Methods/PUT
-
-		/*
 		// Add the link to this lineitem
 		item.id = getOurServerUrl() + LTI13_PATH + "lineitems/" + signed_placement + "/" + retval.getId();
 
 		log.debug("Lineitem item={}",item);
-		response.setContentType(LineItem.CONTENT_TYPE);
+		response.setContentType(SakaiLineItem.CONTENT_TYPE);
 
 		PrintWriter out = response.getWriter();
 		out.print(JacksonUtil.prettyPrint(item));
-		*/
 	}
 
 	/**

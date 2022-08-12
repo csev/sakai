@@ -777,8 +777,14 @@ public class GradingServiceImpl implements GradingService {
                 final Site site = this.siteService.getSite(gradebookUid);
                 if ( plusService.enabled(site) ) {
                     String lineItem = plusService.createLineItem(site, assignmentId, assignmentDefinition);
-                    assignmentDefinition.setLineItem(lineItem);
-                    updateAssignment(gradebookUid, assignmentId, assignmentDefinition);
+                    // Update the assignment with the new lineItem
+                    final GradebookAssignment assignment = getAssignmentWithoutStats(gradebookUid, assignmentId);
+                    if (assignment == null) {
+                        throw new AssessmentNotFoundException(
+                                "There is no assignment with id " + assignmentId + " in gradebook " + gradebookUid);
+                    }
+                    assignment.setLineItem(lineItem);
+                    updateAssignment(assignment);
                 }
             } catch (Exception e) {
                 log.error("Could not load site associated with gradebook - lineitem not created", e);
@@ -836,7 +842,7 @@ public class GradingServiceImpl implements GradingService {
         assignment.setExternalId(assignmentDefinition.getExternalId());
         assignment.setExternalData(assignmentDefinition.getExternalData());
 
-		assignment.setLineItem(assignmentDefinition.getLineItem());
+        assignment.setLineItem(assignmentDefinition.getLineItem());
 
         // if we have a category, get it and set it
         // otherwise clear it fully
@@ -851,6 +857,18 @@ public class GradingServiceImpl implements GradingService {
 
         if (scaleGrades) {
             scaleGrades(gradebook, assignment, originalPointsPossible);
+        }
+
+        // Check if this is a plus course
+        if ( plusService.enabled() ) {
+            try {
+                final Site site = this.siteService.getSite(gradebookUid);
+                if ( plusService.enabled(site) ) {
+                    plusService.updateLineItem(site, assignmentDefinition);
+                }
+            } catch (Exception e) {
+                log.error("Could not load site associated with gradebook - lineitem not updated", e);
+            }
         }
     }
 
