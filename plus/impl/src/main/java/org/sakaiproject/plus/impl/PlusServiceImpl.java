@@ -1178,6 +1178,7 @@ System.out.println("BODY="+body);
 
 		return null;
 	}
+
 	/*
 	 * Send a score to the calling LMS
 	 */
@@ -1186,20 +1187,37 @@ System.out.println("BODY="+body);
 	@Transactional
 	public void processGradeEvent(Event event)
 	{
+System.out.println("processGradeEvent sees event "+event.getResource());
 		String[] parts = StringUtils.split(event.getResource(), '/');
 		if (parts.length < 5) return;
 		final String source = parts[0];
-		if ( ! "gradebookng".equals(source) ) return;
+		String itemId;
+		String studentId;
+		String scoreStr;
+		String siteId;
 
-		System.out.println("processGradeEvent "+event.getResource());
+		// From the UI business logic
+		// gradebook.updateItemScore@/gradebookng/7/12/55a0c76a-69e2-4ca7-816b-3c2e8fe38ce0/42/OK/instructor[m, 2]
+		if ( "gradebookng".equals(source) ) {
+System.out.println("processGradeEvent UI "+event.getResource());
+			itemId = parts[2];
+			studentId = parts[3];
+			scoreStr = parts[4];
+			siteId = event.getContext();
+		// From a web service
+		// gradebook.updateItemScore@/gradebook/a77ed1b6-ceea-4339-ad60-8bbe7219f3b5/Trophy/55a0c76a-69e2-4ca7-816b-3c2e8fe38ce0/99.0/student[m, 2]
+		} else if ( "gradebook".equals(source) ) {
+System.out.println("processGradeEvent WS "+event.getResource());
+			siteId = parts[1];
+			itemId = parts[2];
+			studentId = parts[3];
+			scoreStr = parts[4];
+		} else { // not our event...
+			return;
+		}
 
-		final String gradebookId = parts[1];
-		final String itemId = parts[2];
-		final String studentId = parts[3];
-		final String scoreStr = parts[4];
-		final String siteId = event.getContext();
-		log.debug("Updating score for user {} for item {} with score {} in gradebook {} by {}", studentId, itemId, scoreStr, gradebookId, source);
-System.out.println("gradebookId="+gradebookId+" itemId="+itemId+" studentId="+studentId+" scoreStr="+scoreStr+" siteId="+siteId);
+		log.debug("Updating score for user {} for item {} with score {} in gradebook {} by {}", studentId, itemId, scoreStr, siteId, source);
+System.out.println("siteId="+siteId+" itemId="+itemId+" studentId="+studentId+" scoreStr="+scoreStr+" siteId="+siteId);
 
 		Subject subject = subjectRepository.findBySakaiUserIdAndSakaiSiteId(studentId, siteId);
 System.out.println("subject="+subject);
@@ -1211,9 +1229,9 @@ System.out.println("subject="+subject);
 
 		org.sakaiproject.grading.api.Assignment gradebookAssignment = null;
 		try {
-			gradebookAssignment = gradingService.getAssignmentByNameOrId(event.getContext(), itemId);
+			gradebookAssignment = gradingService.getAssignmentByNameOrId(siteId, itemId);
 		} catch (AssessmentNotFoundException anfe) {
-			log.warn("Can't retrieve gradebook assignment for gradebook {} and item {}, {}", gradebookId, itemId, anfe.getMessage());
+			log.warn("Can't retrieve gradebook assignment for gradebook {} and item {}, {}", siteId, itemId, anfe.getMessage());
 			return;
 		}
 System.out.println("gradebookAssignment="+gradebookAssignment);
@@ -1283,7 +1301,7 @@ System.out.println("comment="+comment);
 		ContextLog cLog = new ContextLog();
 		cLog.setContext(context);
 		cLog.setType(ContextLog.LOG_TYPE.Score_TOKEN);
-		cLog.setAction("processGradeEvent gradebookId="+gradebookId+" itemId="+itemId+" studentId="+studentId+" scoreGiven="+score.scoreGiven+" siteId="+siteId);
+		cLog.setAction("processGradeEvent siteId="+siteId+" itemId="+itemId+" studentId="+studentId+" scoreGiven="+score.scoreGiven+" siteId="+siteId);
 		cLog.setSuccess(Boolean.FALSE);
 
 		// Lets get an access token if we can so we can send the score
