@@ -777,6 +777,7 @@ public class GradingServiceImpl implements GradingService {
                 final Site site = this.siteService.getSite(gradebookUid);
                 if ( plusService.enabled(site) ) {
                     String lineItem = plusService.createLineItem(site, assignmentId, assignmentDefinition);
+System.out.println("addAssignment got lineItem="+lineItem);
                     // Update the assignment with the new lineItem
                     final GradebookAssignment assignment = getAssignmentWithoutStats(gradebookUid, assignmentId);
                     if (assignment == null) {
@@ -784,7 +785,9 @@ public class GradingServiceImpl implements GradingService {
                                 "There is no assignment with id " + assignmentId + " in gradebook " + gradebookUid);
                     }
                     assignment.setLineItem(lineItem);
+System.out.println("Entering updateAssignment");
                     updateAssignment(assignment);
+System.out.println("Back from updateAssignment");
                 }
             } catch (Exception e) {
                 log.error("Could not load site associated with gradebook - lineitem not created", e);

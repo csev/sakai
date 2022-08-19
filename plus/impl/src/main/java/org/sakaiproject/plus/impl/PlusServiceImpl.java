@@ -898,6 +898,7 @@ System.out.println("createLineItem site="+site.getId()+" XassignmentId="+Xassign
 		try {
 			HttpResponse<String> response = HttpClientUtil.sendBody(method, lineItemsUrl, body, headers, dbs);
 			body = response.body();
+System.out.println("CREATE RESPONSE BODY="+body);
 			dbs.append("response body\n");
 			dbs.append(StringUtils.truncate(body, 1000));
 
@@ -915,6 +916,8 @@ System.out.println("createLineItem site="+site.getId()+" XassignmentId="+Xassign
 			return null;
 		}
 
+System.out.println("Parsing the create response");
+
 		// Create and configure an ObjectMapper instance
 		ObjectMapper mapper = JacksonUtil.getLaxObjectMapper();
 		try {
@@ -927,6 +930,7 @@ System.out.println("createLineItem site="+site.getId()+" XassignmentId="+Xassign
 					dbli.setSuccess(Boolean.TRUE);
 					if ( verbose(tenant) ) dbli.setDebugLog(dbs.toString());
 					lineItemRepository.save(dbli);
+System.out.println("Returning lineItemId="+lineItemId);
 					return lineItemId; // Caller saves this as appropriate
 				}
 				dbli.setStatus("did not find returned lineitem id");
@@ -1106,6 +1110,7 @@ System.out.println("restEndPoint="+restEndPoint);
 		try {
 			HttpResponse<String> response = HttpClientUtil.sendBody(method, restEndPoint, body, headers, dbs);
 			body = response.body();
+System.out.println("UPDATE RESPONSE BODY="+body);
 			dbs.append("response body\n");
 			dbs.append(StringUtils.truncate(body, 1000));
 
@@ -1122,7 +1127,6 @@ System.out.println("restEndPoint="+restEndPoint);
 			contextLogRepository.save(cLog);
 			return null;
 		}
-System.out.println("BODY="+body);
 
 		// Create and configure an ObjectMapper instance
 		ObjectMapper mapper = JacksonUtil.getLaxObjectMapper();
@@ -1337,6 +1341,7 @@ System.out.println("comment="+comment);
 		 try {
 			HttpResponse<String> response = HttpClientUtil.sendBody("POST", scoreUrl, body, headers, dbs);
 			body = response.body();
+System.out.println("GRADEEVENT RESPONSE BODY="+body);
 			dbs.append("response body\n");
 			dbs.append(StringUtils.truncate(body, 1000));
 			if ( verbose(tenant) ) {
