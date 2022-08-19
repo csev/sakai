@@ -2437,6 +2437,7 @@ public class SakaiBLTIUtil {
 					"basiclti.outcomes.userid", "admin");
 			String gb_user_eid = ServerConfigurationService.getString(
 					"basiclti.outcomes.usereid", gb_user_id);
+			// At some point we might want to build a skeleton org.sakaiproject.util.Placement so generated events have a context
 			sess.setUserId(gb_user_id);
 			sess.setUserEid(gb_user_eid);
 			if (isRead) {
@@ -2547,6 +2548,7 @@ public class SakaiBLTIUtil {
 					"basiclti.outcomes.userid", "admin");
 			String gb_user_eid = ServerConfigurationService.getString(
 					"basiclti.outcomes.usereid", gb_user_id);
+			// At some point we might want to build a skeleton org.sakaiproject.util.Placement so generated events have a context
 			sess.setUserId(gb_user_id);
 			sess.setUserEid(gb_user_eid);
 			if (scoreGiven == null) {
