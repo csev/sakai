@@ -52,11 +52,20 @@ public class PlusEventObserver implements Observer {
         eventTrackingService.deleteObserver(this);
     }
 
+    /* Two Kinds of events
+     *
+     * From the UI:
+     * gradebook.updateItemScore@/gradebookng/7/12/55a0c76a-69e2-4ca7-816b-3c2e8fe38ce0/42/OK/instructor[m, 2]
+     *
+     * From web services:
+     * gradebook.updateItemScore@/gradebook/a77ed1b6-ceea-4339-ad60-8bbe7219f3b5/Trophy/55a0c76a-69e2-4ca7-816b-3c2e8fe38ce0/99.0/student[m, 2]
+     *
+     */
     @Override
     public void update(Observable o, Object arg) {
         if (arg instanceof Event) {
             Event event = (Event) arg;
-            if (event.getModify() && StringUtils.isNoneBlank(event.getEvent(), event.getContext())) {
+            if (event.getModify() && StringUtils.isNoneBlank(event.getEvent())) {
                 switch (event.getEvent()) {
                     case "gradebook.updateItemScore": // grade updated in gradebook lets attempt to update the submission
 						plusService.processGradeEvent(event);
