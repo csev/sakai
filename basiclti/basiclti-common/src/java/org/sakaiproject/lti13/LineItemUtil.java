@@ -203,16 +203,10 @@ public class LineItemUtil {
 					assignmentId = g.addAssignment(context_id, assignmentObject);
 					assignmentObject.setId(assignmentId);
 
-					// Copy line item across
-					// TODO: Make this not needed so as to never have to call updateAssignment
-					Assignment dba = g.getAssignment(context_id, assignmentId);
-					if ( dba != null ) {
-						assignmentObject.setLineItem(dba.getLineItem());
-					}
-
-					// TODO: Work through this with Earle / Adrian
+					/*  Removed when GradingSerivceImpl fixed - 2202-08-21 - Chuck S.
 					// NOTE: addAssignment does *not* set the external values - Update *does*
 					g.updateAssignment(context_id, assignmentId, assignmentObject);
+					*/
 					log.info("Added assignment: {} with Id: {}", lineItem.label, assignmentId);
 				} catch (ConflictingAssignmentNameException e) {
 					failure = "ConflictingAssignmentNameException while adding assignment " + e.getMessage();

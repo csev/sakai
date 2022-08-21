@@ -322,14 +322,28 @@ public class GradingServiceImpl implements GradingService {
         return assignmentDefinition;
     }
 
-    public Long createAssignment(Long gradebookId, String name, Double points, Date dueDate, Boolean isNotCounted,
+    // Legacy method - Removed 2022-08-21 - Chuck S.
+    /*
+    private Long createAssignment(Long gradebookId, String name, Double points, Date dueDate, Boolean isNotCounted,
         Boolean isReleased, Boolean isExtraCredit, Integer sortOrder)
             throws ConflictingAssignmentNameException, StaleObjectModificationException {
 
-        return createNewAssignment(gradebookId, null, name, points, dueDate, isNotCounted, isReleased, isExtraCredit, sortOrder, null);
+        Assignment assignmentDefinition = null;
+        return createNewAssignment(gradebookId, null, name, points, dueDate, isNotCounted, isReleased, isExtraCredit, sortOrder, null, assignmentDefinition);
+    }
+    */
+
+    private Long createAssignment(Long gradebookId, String name, Double points, Date dueDate, Boolean isNotCounted,
+        Boolean isReleased, Boolean isExtraCredit, Integer sortOrder,
+        Assignment assignmentDefinition)
+            throws ConflictingAssignmentNameException, StaleObjectModificationException {
+
+        return createNewAssignment(gradebookId, null, name, points, dueDate, isNotCounted, isReleased, isExtraCredit, sortOrder, null, assignmentDefinition);
     }
 
-    public Long createAssignmentForCategory(Long gradebookId, Long categoryId, String name, Double points, Date dueDate, Boolean isNotCounted,
+    // Legacy method - Removed 2022-08-21 - Chuck S.
+    /*
+    private Long createAssignmentForCategory(Long gradebookId, Long categoryId, String name, Double points, Date dueDate, Boolean isNotCounted,
         Boolean isReleased, Boolean isExtraCredit, Integer categorizedSortOrder)
             throws ConflictingAssignmentNameException, StaleObjectModificationException, IllegalArgumentException {
 
@@ -337,19 +351,32 @@ public class GradingServiceImpl implements GradingService {
             throw new IllegalArgumentException("gradebookId or categoryId is null in BaseHibernateManager.createAssignmentForCategory");
         }
 
-        return createNewAssignment(gradebookId, categoryId, name, points, dueDate, isNotCounted, isReleased, isExtraCredit, null, categorizedSortOrder);
+        Assignment assignmentDefinition = null;
+        return createNewAssignment(gradebookId, categoryId, name, points, dueDate, isNotCounted, isReleased, isExtraCredit, null, categorizedSortOrder, assignmentDefinition);
+    }
+    */
+
+    private Long createAssignmentForCategory(Long gradebookId, Long categoryId, String name, Double points, Date dueDate, Boolean isNotCounted,
+        Boolean isReleased, Boolean isExtraCredit, Integer categorizedSortOrder, Assignment assignmentDefinition)
+            throws ConflictingAssignmentNameException, StaleObjectModificationException, IllegalArgumentException {
+
+        if (gradebookId == null || categoryId == null) {
+            throw new IllegalArgumentException("gradebookId or categoryId is null in BaseHibernateManager.createAssignmentForCategory");
+        }
+
+        return createNewAssignment(gradebookId, categoryId, name, points, dueDate, isNotCounted, isReleased, isExtraCredit, null, categorizedSortOrder, assignmentDefinition);
     }
 
     private Long createNewAssignment(final Long gradebookId, final Long categoryId, final String name, final Double points, final Date dueDate, final Boolean isNotCounted,
-            final Boolean isReleased, final Boolean isExtraCredit, final Integer sortOrder, final Integer categorizedSortOrder)
+            final Boolean isReleased, final Boolean isExtraCredit, final Integer sortOrder, final Integer categorizedSortOrder, Assignment assignmentDefinition)
                     throws ConflictingAssignmentNameException, StaleObjectModificationException {
 
-        GradebookAssignment asn = prepareNewAssignment(name, points, dueDate, isNotCounted, isReleased, isExtraCredit, sortOrder, categorizedSortOrder);
+        GradebookAssignment asn = prepareNewAssignment(name, points, dueDate, isNotCounted, isReleased, isExtraCredit, sortOrder, categorizedSortOrder, assignmentDefinition);
         return saveNewAssignment(gradebookId, categoryId, asn);
     }
 
     private GradebookAssignment prepareNewAssignment(final String name, final Double points, final Date dueDate, final Boolean isNotCounted, final Boolean isReleased,
-            final Boolean isExtraCredit, final Integer sortOrder, final Integer categorizedSortOrder) {
+            final Boolean isExtraCredit, final Integer sortOrder, final Integer categorizedSortOrder, Assignment assignmentDefinition) {
 
         // name cannot contain these special chars as they are reserved for special columns in import/export
         String validatedName = GradebookHelper.validateGradeItemName(name);
@@ -373,6 +400,13 @@ public class GradingServiceImpl implements GradingService {
         }
         if (categorizedSortOrder != null) {
             asn.setCategorizedSortOrder(categorizedSortOrder);
+        }
+
+        // Add things not include in the calling sequence
+        if ( assignmentDefinition != null ) {
+            asn.setExternallyMaintained(assignmentDefinition.getExternallyMaintained());
+            asn.setExternalId(assignmentDefinition.getExternalId());
+            asn.setExternalAppName(assignmentDefinition.getExternalAppName());
         }
 
         return asn;
@@ -655,7 +689,7 @@ public class GradingServiceImpl implements GradingService {
                         // create the assignment for the current category
                         try {
                             Long newId = createAssignmentForCategory(gradebook.getId(), categoriesCreated.get(c.getName()), a.getName(), a.getPoints(),
-                                    a.getDueDate(), !a.getCounted(), a.getReleased(), a.getExtraCredit(), a.getCategorizedSortOrder());
+                                    a.getDueDate(), !a.getCounted(), a.getReleased(), a.getExtraCredit(), a.getCategorizedSortOrder(), null);
                             transversalMap.put("gb/"+a.getId(),"gb/"+newId);
                         } catch (final ConflictingAssignmentNameException e) {
                             // assignment already exists. Could be from a merge.
@@ -688,7 +722,7 @@ public class GradingServiceImpl implements GradingService {
         assignments.forEach(a -> {
 
             try {
-                Long newId = createAssignment(gradebook.getId(), a.getName(), a.getPoints(), a.getDueDate(), !a.getCounted(), a.getReleased(), a.getExtraCredit(), a.getSortOrder());
+                Long newId = createAssignment(gradebook.getId(), a.getName(), a.getPoints(), a.getDueDate(), !a.getCounted(), a.getReleased(), a.getExtraCredit(), a.getSortOrder(), null);
                 transversalMap.put("gb/"+a.getId(),"gb/"+newId);
             } catch (final ConflictingAssignmentNameException e) {
                 // assignment already exists. Could be from a merge.
@@ -763,10 +797,12 @@ public class GradingServiceImpl implements GradingService {
         if (assignmentDefinition.getCategoryId() != null) {
             assignmentId = createAssignmentForCategory(gradebook.getId(), assignmentDefinition.getCategoryId(), validatedName,
                     assignmentDefinition.getPoints(), assignmentDefinition.getDueDate(), !assignmentDefinition.getCounted(), assignmentDefinition.getReleased(),
-                    assignmentDefinition.getExtraCredit(), assignmentDefinition.getCategorizedSortOrder());
+                    assignmentDefinition.getExtraCredit(), assignmentDefinition.getCategorizedSortOrder(),
+                    assignmentDefinition);
         } else {
             assignmentId = createAssignment(gradebook.getId(), validatedName, assignmentDefinition.getPoints(), assignmentDefinition.getDueDate(),
-                !assignmentDefinition.getCounted(), assignmentDefinition.getReleased(), assignmentDefinition.getExtraCredit(), assignmentDefinition.getSortOrder());
+                !assignmentDefinition.getCounted(), assignmentDefinition.getReleased(), assignmentDefinition.getExtraCredit(), assignmentDefinition.getSortOrder(), 
+                assignmentDefinition);
         }
 
 
