@@ -385,7 +385,6 @@ public class GradingServiceImpl implements GradingService {
         if (assignmentNameExists(asn.getName(), asn.getGradebook())) {
             throw new ConflictingAssignmentNameException("You cannot save multiple assignments in a gradebook with the same name");
         }
-
         return gradingPersistenceManager.saveAssignment(asn).getId();
     }
 
@@ -748,8 +747,6 @@ public class GradingServiceImpl implements GradingService {
     }
 
     @Override
-	// YADA
-    // YADA @Transactional
     public Long addAssignment(final String gradebookUid, Assignment assignmentDefinition) {
 
         if (!gradingAuthz.isUserAbleToEditAssessments(gradebookUid)) {
@@ -778,28 +775,9 @@ public class GradingServiceImpl implements GradingService {
             try {
                 final Site site = this.siteService.getSite(gradebookUid);
                 if ( plusService.enabled(site) ) {
+
                     String lineItem = plusService.createLineItem(site, assignmentId, assignmentDefinition);
-System.out.println("addAssignment got lineItem="+lineItem);
-                    // YADA
-                    Optional<GradebookAssignment> gbo = gradingPersistenceManager.getAssignmentById(assignmentId);
-System.out.println("gbo="+gbo);
-                    if (!gbo.isPresent()) {
-                        throw new AssessmentNotFoundException(
-                                "There is no assignment with id " + assignmentId + " in gradebook " + gradebookUid);
-                    }
-                    GradebookAssignment gba = gbo.get();
-System.out.println("gba="+gba+" getLineItem="+gba.getLineItem());
-                    gba.setLineItem(lineItem);
-System.out.println("Entering saveAssignment getLineItem="+gba.getLineItem());
-                    gradingPersistenceManager.saveAssignment(gba);
-System.out.println("Back from saveAssignment getLineItem="+gba.getLineItem());
-					gbo = gradingPersistenceManager.getAssignmentById(assignmentId);
-System.out.println("gbo="+gbo);
-                    if (gbo.isPresent()) {
-						gba = gbo.get();
-System.out.println("gba="+gba+" getLineItem="+gba.getLineItem());
-					}
-/*
+
                     // Update the assignment with the new lineItem
                     final GradebookAssignment assignment = getAssignmentWithoutStats(gradebookUid, assignmentId);
                     if (assignment == null) {
@@ -807,10 +785,7 @@ System.out.println("gba="+gba+" getLineItem="+gba.getLineItem());
                                 "There is no assignment with id " + assignmentId + " in gradebook " + gradebookUid);
                     }
                     assignment.setLineItem(lineItem);
-System.out.println("Entering updateAssignment");
                     updateAssignment(assignment);
-System.out.println("Back from updateAssignment");
-*/
                 }
             } catch (Exception e) {
                 log.error("Could not load site associated with gradebook - lineitem not created", e);
