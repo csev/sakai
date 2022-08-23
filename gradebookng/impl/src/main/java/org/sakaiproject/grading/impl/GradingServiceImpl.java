@@ -2834,6 +2834,7 @@ public class GradingServiceImpl implements GradingService {
      */
     private void postUpdateGradeEvent(String gradebookUid, String assignmentName, String studentUid, Double pointsEarned) {
 
+System.out.println("postUpdateGradeEvent "+gradebookUid + "/" + assignmentName + "/" + studentUid + "/" + pointsEarned + "/student");
         postEvent("gradebook.updateItemScore",
                 "/gradebook/" + gradebookUid + "/" + assignmentName + "/" + studentUid + "/" + pointsEarned + "/student");
     }
@@ -3864,10 +3865,33 @@ public class GradingServiceImpl implements GradingService {
         asn.setReleased(true);
         asn.setUngraded(false);
 
-        gradingPersistenceManager.saveAssignment(asn);
+        Long assignmentId = gradingPersistenceManager.saveGradebookAssignment(asn).getId();
 
         log.info("External assessment added to gradebookUid={}, externalId={} by userUid={} from externalApp={}", gradebookUid, externalId,
                 getUserUid(), externalServiceDescription);
+
+        // Check if this ia a plus course
+        if ( plusService.enabled() ) {
+            try {
+                final Site site = this.siteService.getSite(gradebookUid);
+                if ( plusService.enabled(site) ) {
+
+                    String lineItem = plusService.createLineItem(site, assignmentId, getAssignmentDefinition(asn));
+
+                    // Update the assignment with the new lineItem
+                    final GradebookAssignment assignment = getAssignmentWithoutStats(gradebookUid, assignmentId);
+                    if (assignment == null) {
+                        throw new AssessmentNotFoundException(
+                                "There is no assignment with id " + assignmentId + " in gradebook " + gradebookUid);
+                    }
+                    assignment.setLineItem(lineItem);
+                    updateAssignment(assignment);
+                }
+            } catch (Exception e) {
+                log.error("Could not load site associated with gradebook - lineitem not created", e);
+            }
+        }
+
     }
 
     @Override
@@ -4361,10 +4385,32 @@ public class GradingServiceImpl implements GradingService {
             asn.setUngraded(false);
         }
 
-        gradingPersistenceManager.saveGradebookAssignment(asn);
+        Long assignmentId = gradingPersistenceManager.saveGradebookAssignment(asn).getId();
 
         log.info("External assessment added to gradebookUid={}, externalId={} by userUid={} from externalApp={}", gradebookUid, externalId,
                 getUserUid(), externalServiceDescription);
+
+        // Check if this ia a plus course
+        if ( plusService.enabled() ) {
+            try {
+                final Site site = this.siteService.getSite(gradebookUid);
+                if ( plusService.enabled(site) ) {
+
+                    String lineItem = plusService.createLineItem(site, assignmentId, getAssignmentDefinition(asn));
+
+                    // Update the assignment with the new lineItem
+                    final GradebookAssignment assignment = getAssignmentWithoutStats(gradebookUid, assignmentId);
+                    if (assignment == null) {
+                        throw new AssessmentNotFoundException(
+                                "There is no assignment with id " + assignmentId + " in gradebook " + gradebookUid);
+                    }
+                    assignment.setLineItem(lineItem);
+                    updateAssignment(assignment);
+                }
+            } catch (Exception e) {
+                log.error("Could not load site associated with gradebook - lineitem not created", e);
+            }
+        }
     }
 
     @Override
@@ -4410,6 +4456,18 @@ public class GradingServiceImpl implements GradingService {
         gradingPersistenceManager.saveGradebookAssignment(asn);
 
         log.info("External assessment updated in gradebookUid={}, externalId={} by userUid={}", gradebookUid, externalId, getUserUid());
+
+        // Check if this is a plus course
+        if ( plusService.enabled() ) {
+            try {
+                final Site site = this.siteService.getSite(gradebookUid);
+                if ( plusService.enabled(site) ) {
+                    plusService.updateLineItem(site, getAssignmentDefinition(asn));
+                }
+            } catch (Exception e) {
+                log.error("Could not load site associated with gradebook - lineitem not updated", e);
+            }
+        }
     }
 
     @Override
