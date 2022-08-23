@@ -2,11 +2,12 @@
 TODO LIST
 =========
 
-Make sure the due date moves across
+Make sure columns are created and grades are flowing:
+    - Assignments - columns but not grades
+    - Samigo
+    - Forums
 
 Make tool useful for instructors
-
-Make sure that due dates flow - Canvas especially
 
 Make sure that edits happen - check if things are re-scaled
 
@@ -42,6 +43,11 @@ When auto-provisioning set the "Tool Supports LTI 1.3"
 Teach admin tool about the setting - add message if not enabled.
 
 Add isDraft() indicator to Tenant List in Admin UI
+
+Make sure columns are created and grades are flowing:
+    - Gradebook UI
+    - LTI 1.1
+    - LTI 1.3
 
 
 
