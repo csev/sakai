@@ -527,7 +527,8 @@ public class ProviderServlet extends HttpServlet {
 		String repost = request.getParameter("repost");
 		if ( isEmpty(repost) ) {
 			List<String> newWindowTools = getNewWindowTools(tenant);
-			boolean forceNewWindow = SAKAI_SITE_LAUNCH.equals(tool_id) || newWindowTools.contains(tool_id);
+			// boolean forceNewWindow = SAKAI_SITE_LAUNCH.equals(tool_id) || newWindowTools.contains(tool_id);
+			boolean forceNewWindow = newWindowTools.contains(tool_id);
 			handleRepost(request, response, forceNewWindow);
 			return;
 		}
