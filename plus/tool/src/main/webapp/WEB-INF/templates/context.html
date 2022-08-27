@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link media="all" href="/library/skin/tool_base.css" rel="stylesheet" type="text/css" />
+    <script type="module" th:src="@{~/webcomponents/conversations/sakai-conversations.js} + ${cdnQuery}"></script>
+    [(${sakaiHtmlHead})]
+  </head>
+  <body onload="setMainFrameHeight('Mainmercuryx710');setFocus(focus_path);"   class="Mrphs-container Mrphs-sakai-plus">
+    <script>includeLatestJQuery('sakai.plus');</script>
+    <div class="portletBody">
+        <h1><span th:text="#{plus.tool.context.title}">Context:</span> <span th:text="${context.title}">Sakai</span></h1>
+        <p><a th:href="@{/contexts/{id}(id=${tenantId})}" th:text="#{plus.tool.all.contexts}">All Contexts</a> |
+        <a th:href="@{/}" th:text="#{plus.tool.all.tenants}">All Tenants</a></p>
+        <p><b th:text="#{plus.tool.job.start}">Start:</b> <span th:text="${context.nrpsStart}">Start</span></p>
+        <p><b th:text="#{plus.tool.job.finish}">Finish:</b> <span th:text="${context.nrpsFinish}">Finish</span></p>
+        <hr/>
+        <p><b th:text="#{plus.tool.job.status}">Last operation status:</b><span th:text="${context.status}">status</span></p>
+        <div th:if="*{context.debugLog!=null and #strings.length(context.debugLog)>0}">
+        <p><b th:text="#{plus.tool.job.finish}">Most Recent Debug Log</b>
+        <a href="#" onclick="$('#debuglog').toggle();return false;" th:text="#{plus.tool.hide.show}">Hide/Show</a></p>
+        <span id="debuglog" style="display: none; white-space: pre-line; font-family: monospace;" th:text="${context.debugLog}"></span>
+        </div>
+    </div>
+  </body>
+</html>

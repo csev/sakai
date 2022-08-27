@@ -110,6 +110,7 @@ import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.tool.api.SessionManager;
 import org.sakaiproject.tool.api.ToolManager;
+import org.sakaiproject.plus.api.PlusService;
 import org.sakaiproject.grading.api.GradingAuthz;
 import org.sakaiproject.util.ResourceLoader;
 
@@ -144,6 +145,7 @@ public class GradingServiceImpl implements GradingService {
     @Autowired private GradingPersistenceManager gradingPersistenceManager;
     @Autowired private ResourceLoader resourceLoader;
     @Autowired private SiteService siteService;
+    @Autowired private PlusService plusService;
     @Autowired private SectionAwareness sectionAwareness;
     @Autowired private SecurityService securityService;
     @Autowired private SessionManager sessionManager;
@@ -315,6 +317,7 @@ public class GradingServiceImpl implements GradingService {
         assignmentDefinition.setUngraded(internalAssignment.getUngraded());
         assignmentDefinition.setSortOrder(internalAssignment.getSortOrder());
         assignmentDefinition.setCategorizedSortOrder(internalAssignment.getCategorizedSortOrder());
+        assignmentDefinition.setLineItem(internalAssignment.getLineItem());
 
         return assignmentDefinition;
     }
@@ -756,15 +759,34 @@ public class GradingServiceImpl implements GradingService {
 
         final Gradebook gradebook = getGradebook(gradebookUid);
 
+        Long assignmentId = null;
         // if attaching to category
         if (assignmentDefinition.getCategoryId() != null) {
-            return createAssignmentForCategory(gradebook.getId(), assignmentDefinition.getCategoryId(), validatedName,
+            assignmentId = createAssignmentForCategory(gradebook.getId(), assignmentDefinition.getCategoryId(), validatedName,
                     assignmentDefinition.getPoints(), assignmentDefinition.getDueDate(), !assignmentDefinition.getCounted(), assignmentDefinition.getReleased(),
                     assignmentDefinition.getExtraCredit(), assignmentDefinition.getCategorizedSortOrder());
+        } else {
+            assignmentId = createAssignment(gradebook.getId(), validatedName, assignmentDefinition.getPoints(), assignmentDefinition.getDueDate(),
+                !assignmentDefinition.getCounted(), assignmentDefinition.getReleased(), assignmentDefinition.getExtraCredit(), assignmentDefinition.getSortOrder());
         }
 
-        return createAssignment(gradebook.getId(), validatedName, assignmentDefinition.getPoints(), assignmentDefinition.getDueDate(),
-                !assignmentDefinition.getCounted(), assignmentDefinition.getReleased(), assignmentDefinition.getExtraCredit(), assignmentDefinition.getSortOrder());
+
+        // Check if this ia a plus course
+        if ( plusService.enabled() ) {
+            try {
+                final Site site = this.siteService.getSite(gradebookUid);
+                if ( plusService.enabled(site) ) {
+                    String lineItem = plusService.createLineItem(site, assignmentId, assignmentDefinition);
+                    assignmentDefinition.setLineItem(lineItem);
+                    updateAssignment(gradebookUid, assignmentId, assignmentDefinition);
+                }
+            } catch (Exception e) {
+                log.error("Could not load site associated with gradebook - lineitem not created", e);
+            }
+        }
+
+        return assignmentId;
+
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -813,6 +835,8 @@ public class GradingServiceImpl implements GradingService {
         assignment.setExternallyMaintained(assignmentDefinition.getExternallyMaintained());
         assignment.setExternalId(assignmentDefinition.getExternalId());
         assignment.setExternalData(assignmentDefinition.getExternalData());
+
+		assignment.setLineItem(assignmentDefinition.getLineItem());
 
         // if we have a category, get it and set it
         // otherwise clear it fully
