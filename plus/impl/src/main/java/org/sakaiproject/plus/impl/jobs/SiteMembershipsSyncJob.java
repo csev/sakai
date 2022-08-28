@@ -37,7 +37,6 @@ public class SiteMembershipsSyncJob implements StatefulJob {
 	public void execute(JobExecutionContext context) throws JobExecutionException {
 		
         log.info("SiteMembershipsSyncJob.execute");
-System.out.println("Plus SiteMembershipsSyncJob.execute");
 
 	}
 }

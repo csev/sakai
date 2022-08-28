@@ -590,7 +590,7 @@ public class PlusServiceImpl implements PlusService {
 			contextLogRepository.save(cLog);
 			return;
 		}
-		if ( verbose(tenant) ) System.out.println(dbs.toString());
+		if ( verbose(tenant) ) log.debug("Debug Log:\n{}", dbs.toString());
 
 		cLog.setAction("syncSiteMemberships context="+context.getId()+" tenant="+context.getTenant()+" contextMemberships="+contextMemberships+" access_token="+nrpsAccessToken.access_token);
 
@@ -612,7 +612,7 @@ public class PlusServiceImpl implements PlusService {
 		InputStream is = null;
 		 try {
 			HttpResponse<InputStream> response = HttpClientUtil.sendGetStream(contextMemberships, null, headers, dbs);
-			if ( verbose(tenant) ) System.out.println(dbs.toString());
+			if ( verbose(tenant) ) log.debug("Debug Log:\n{}", dbs.toString());
 			is = response.body();
 		} catch (Exception e) {
 			log.error("Error retrieving NRPS (Names and Roles) data from {}", contextMemberships);
@@ -654,7 +654,7 @@ public class PlusServiceImpl implements PlusService {
 				if ( nextToken == JsonToken.END_ARRAY ) break;
 				Member member = mapper.readValue(jsonParser, Member.class);
 
-				if ( verbose(tenant) ) System.out.println("processing member="+member.email);
+				if ( verbose(tenant) ) log.info("processing member={}",member.email);
 
 				count = count + 1;
 
@@ -777,8 +777,6 @@ public class PlusServiceImpl implements PlusService {
 	public String createLineItem(Site site, Long assignmentId,
 		final org.sakaiproject.grading.api.Assignment assignmentDefinition)
 	{
-		Long XassignmentId = assignmentDefinition.getId();
-System.out.println("createLineItem site="+site.getId()+" XassignmentId="+XassignmentId);
 		String contextGuid = site.getId();
 		Optional<Context> optContext = contextRepository.findById(contextGuid);
 		Context context = null;
@@ -898,11 +896,11 @@ System.out.println("createLineItem site="+site.getId()+" XassignmentId="+Xassign
 		try {
 			HttpResponse<String> response = HttpClientUtil.sendBody(method, lineItemsUrl, body, headers, dbs);
 			body = response.body();
-System.out.println("CREATE RESPONSE BODY="+body);
+			log.debug("CREATE RESPONSE BODY={}", body);
 			dbs.append("response body\n");
 			dbs.append(StringUtils.truncate(body, 1000));
 
-			if ( verbose(tenant) ) System.out.println(dbs.toString());
+			if ( verbose(tenant) ) log.debug("Debug Log:\n{}", dbs.toString());
 		} catch (Exception e) {
 			dbli.setStatus("Error creating lineItem at "+lineItemsUrl+" "+e.getMessage());
 			dbli.setDebugLog(dbs.toString());
@@ -916,8 +914,6 @@ System.out.println("CREATE RESPONSE BODY="+body);
 			return null;
 		}
 
-System.out.println("Parsing the create response");
-
 		// Create and configure an ObjectMapper instance
 		ObjectMapper mapper = JacksonUtil.getLaxObjectMapper();
 		try {
@@ -930,7 +926,7 @@ System.out.println("Parsing the create response");
 					dbli.setSuccess(Boolean.TRUE);
 					if ( verbose(tenant) ) dbli.setDebugLog(dbs.toString());
 					lineItemRepository.save(dbli);
-System.out.println("Returning lineItemId="+lineItemId);
+					log.debug("Returning lineItemId={}", lineItemId);
 					return lineItemId; // Caller saves this as appropriate
 				}
 				dbli.setStatus("did not find returned lineitem id");
@@ -975,9 +971,8 @@ System.out.println("Returning lineItemId="+lineItemId);
 	{
 		if ( assignmentDefinition == null ) return null;
 		Long assignmentId = assignmentDefinition.getId();
-System.out.println("updateLineItem site="+site.getId()+" assignmentId="+assignmentId);
 		String lineItemId =  assignmentDefinition.getLineItem();
-System.out.println("lineItemId="+lineItemId);
+		log.debug("updateLineItem site={} assignmentId={} lineItemId={}", site.getId(), assignmentId, lineItemId);
 
 		String contextGuid = site.getId();
 		Optional<Context> optContext = contextRepository.findById(contextGuid);
@@ -1062,7 +1057,6 @@ System.out.println("lineItemId="+lineItemId);
 		} else {
 			dbli = new org.sakaiproject.plus.api.model.LineItem();
 		}
-System.out.println("restEndPoint="+restEndPoint);
 
 		// Track this in our local database including success / failure of the LMS interaction
 		dbli.setId(assignmentId);
@@ -1110,11 +1104,11 @@ System.out.println("restEndPoint="+restEndPoint);
 		try {
 			HttpResponse<String> response = HttpClientUtil.sendBody(method, restEndPoint, body, headers, dbs);
 			body = response.body();
-System.out.println("UPDATE RESPONSE BODY="+body);
+			log.debug("UPDATE RESPONSE BODY={}", body);
 			dbs.append("response body\n");
 			dbs.append(StringUtils.truncate(body, 1000));
 
-			if ( verbose(tenant) ) System.out.println(dbs.toString());
+			if ( verbose(tenant) ) log.debug("Debug Log:\n{}", dbs.toString());
 		} catch (Exception e) {
 			dbli.setStatus("Error creating lineItem at "+lineItemsUrl+" "+e.getMessage());
 			dbli.setDebugLog(dbs.toString());
@@ -1191,7 +1185,7 @@ System.out.println("UPDATE RESPONSE BODY="+body);
 	@Transactional
 	public void processGradeEvent(Event event)
 	{
-System.out.println("processGradeEvent sees event "+event.getResource());
+		log.debug("processGradeEvent sees event {}", event.getResource());
 		String[] parts = StringUtils.split(event.getResource(), '/');
 		if (parts.length < 5) return;
 		final String source = parts[0];
@@ -1203,7 +1197,7 @@ System.out.println("processGradeEvent sees event "+event.getResource());
 		// From the UI business logic
 		// gradebook.updateItemScore@/gradebookng/7/12/55a0c76a-69e2-4ca7-816b-3c2e8fe38ce0/42/OK/instructor[m, 2]
 		if ( "gradebookng".equals(source) ) {
-System.out.println("processGradeEvent UI "+event.getResource());
+			log.debug("processGradeEvent UI {}", event.getResource());
 			itemId = parts[2];
 			studentId = parts[3];
 			scoreStr = parts[4];
@@ -1211,7 +1205,7 @@ System.out.println("processGradeEvent UI "+event.getResource());
 		// From a web service
 		// gradebook.updateItemScore@/gradebook/a77ed1b6-ceea-4339-ad60-8bbe7219f3b5/Trophy/55a0c76a-69e2-4ca7-816b-3c2e8fe38ce0/99.0/student[m, 2]
 		} else if ( "gradebook".equals(source) ) {
-System.out.println("processGradeEvent WS "+event.getResource());
+			log.debug("processGradeEvent WS {}", event.getResource());
 			siteId = parts[1];
 			itemId = parts[2];
 			studentId = parts[3];
@@ -1221,10 +1215,9 @@ System.out.println("processGradeEvent WS "+event.getResource());
 		}
 
 		log.debug("Updating score for user {} for item {} with score {} in gradebook {} by {}", studentId, itemId, scoreStr, siteId, source);
-System.out.println("siteId="+siteId+" itemId="+itemId+" studentId="+studentId+" scoreStr="+scoreStr+" siteId="+siteId);
 
 		Subject subject = subjectRepository.findBySakaiUserIdAndSakaiSiteId(studentId, siteId);
-System.out.println("subject="+subject);
+		log.debug("subject={}", subject);
 		if ( subject == null ) {
 			// TODO: demote this to a lower error level because it is really just a local Sakai user.
 			log.error("Can't retrieve subject for {}", studentId);
@@ -1238,10 +1231,8 @@ System.out.println("subject="+subject);
 			log.warn("Can't retrieve gradebook assignment for gradebook {} and item {}, {}", siteId, itemId, anfe.getMessage());
 			return;
 		}
-System.out.println("gradebookAssignment="+gradebookAssignment);
 
 		String lineItem = gradebookAssignment.getLineItem();
-System.out.println("lineItem="+lineItem);
 		if ( isEmpty(lineItem) ) {
 			// TODO: demote this to a lower error level because it is really just a local  gradebook column
 			log.error("No lineItem for gradebookAssignment {}", gradebookAssignment.getId());
@@ -1249,11 +1240,9 @@ System.out.println("lineItem="+lineItem);
 		}
 
 		Long gradebookColumnId = gradebookAssignment.getId();
-System.out.println("gradebookColumnId="+gradebookColumnId);
 		CommentDefinition commentDef = gradingService.getAssignmentScoreComment(siteId, gradebookColumnId, studentId);
 		String comment = null;
 		if ( commentDef != null ) comment = commentDef.getCommentText();
-System.out.println("comment="+comment);
 
 		Tenant tenant = subject.getTenant();
 		if ( tenant == null ) {
@@ -1304,6 +1293,7 @@ System.out.println("comment="+comment);
 		// Prepare for Per-Context log
 		ContextLog cLog = new ContextLog();
 		cLog.setContext(context);
+		cLog.setSubject(subject);
 		cLog.setType(ContextLog.LOG_TYPE.Score_TOKEN);
 		cLog.setAction("processGradeEvent siteId="+siteId+" itemId="+itemId+" studentId="+studentId+" scoreGiven="+score.scoreGiven+" siteId="+siteId);
 		cLog.setSuccess(Boolean.FALSE);
@@ -1324,7 +1314,7 @@ System.out.println("comment="+comment);
 			contextLogRepository.save(cLog);
 			return;
 		}
-		if ( verbose(tenant) ) System.out.println(dbs.toString());
+		if ( verbose(tenant) ) log.debug("Debug Log:\n{}", dbs.toString());
 
 		// Lets send a score
 		// https://www.imsglobal.org/spec/lti-ags/v2p0#score-publish-service
@@ -1341,15 +1331,14 @@ System.out.println("comment="+comment);
 		 try {
 			HttpResponse<String> response = HttpClientUtil.sendBody("POST", scoreUrl, body, headers, dbs);
 			body = response.body();
-System.out.println("GRADEEVENT RESPONSE BODY="+body);
+			log.debug("GRADEEVENT RESPONSE BODY={}", body);
 			dbs.append("response body\n");
 			dbs.append(StringUtils.truncate(body, 1000));
 			if ( verbose(tenant) ) {
-				System.out.println(dbs.toString());  // Only if verbose is on
+				log.debug("Debug Log:\n{}", dbs.toString());  // Only if verbose is on
 				dbsc.setDebugLog(dbs.toString());
 			}
 			dbsc.setSuccess(Boolean.TRUE);
-System.out.println("Storing score...");
 			scoreRepository.save(dbsc);
 
 			cLog.setStatus(dbsc.getStatus());

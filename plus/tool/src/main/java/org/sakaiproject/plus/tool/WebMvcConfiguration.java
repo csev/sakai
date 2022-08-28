@@ -51,7 +51,6 @@ public class WebMvcConfiguration implements ApplicationContextAware, WebMvcConfi
     public MessageSource messageSource() {
         ResourceLoaderMessageSource messages = new ResourceLoaderMessageSource();
         messages.setBasename("Messages");
-System.out.println("MESSAGES WAS HERE");
         return messages;
     }
 

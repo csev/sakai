@@ -559,7 +559,7 @@ public class ProviderServlet extends HttpServlet {
 			plusService.invokeProcessors(payload, PlusService.ProcessingState.afterValidation);
 
 			User user = userFinderOrCreator.findOrCreateUser(payload, false, isEmailTrustedConsumer);
-			if ( plusService.verbose() ) System.out.println("user="+user);
+			if ( plusService.verbose() ) log.info("user={}", user);
 
 			plusService.connectSubjectAndUser(launch.getSubject(), user);
 
@@ -593,7 +593,7 @@ public class ProviderServlet extends HttpServlet {
 			}
 
 			Site site = findOrCreateSite(payload);
-			if ( plusService.verbose() ) System.out.println("site="+site);
+			if ( plusService.verbose() ) log.info("site={}", site);
 
 			plusService.connectContextAndSite(launch.getContext(), site);
 
@@ -1285,7 +1285,7 @@ public class ProviderServlet extends HttpServlet {
 		// Get the site if it exists
 		try {
 			site = SiteService.getSite(siteId);
-			if ( plusService.verbose() ) System.out.println("Loaded existing site="+site.getId());
+			if ( plusService.verbose() ) log.info("Loaded existing site={}", site.getId());
 			updateSiteDetailsIfChanged(site, context_title, context_label);
 			return site;
 		} catch (Exception e) {
@@ -1653,7 +1653,7 @@ public class ProviderServlet extends HttpServlet {
 					long then = 0L;
 
 					if (plusService.verbose() || log.isDebugEnabled()) {
-						log.debug("Starting memberships sync. guid={}", contextGuid);
+						log.info("Starting memberships sync. guid={}", contextGuid);
 						then = (new Date()).getTime();
 					}
 
