@@ -125,6 +125,9 @@ public class PlusServiceImpl implements PlusService {
 	@Autowired private UserPictureSetter userPictureSetter;
 	@Autowired private ServerConfigurationService serverConfigurationService;
 
+	// Wait five minutes between successive calls to NRPS.
+	public final long delayNRPS = 300;
+
 	// TODO: Test this when we have some sample processors - mostly worry about classloader issues
 	@Setter private List<BLTIProcessor> bltiProcessors = new ArrayList();
 
@@ -520,6 +523,17 @@ public class PlusServiceImpl implements PlusService {
 		if ( context == null ) {
 			log.info("Context notfound {}", contextGuid);
 			return;
+		}
+
+		Instant lastRun = context.getNrpsStart();
+		if ( lastRun != null ) {
+			long lastRunEpoch = lastRun.getEpochSecond();
+			long nowEpoch = Instant.now().getEpochSecond();
+			long delta = nowEpoch - lastRunEpoch;
+			if ( delta < delayNRPS ) {
+				log.info("Waiting {} seconds between NRPS calls context={} delta={}", delayNRPS, contextGuid, delta);
+				return;
+			}
 		}
 
 		String tenantGuid = context.getTenant().getId();
