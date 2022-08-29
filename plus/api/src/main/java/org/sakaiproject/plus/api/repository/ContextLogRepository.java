@@ -24,4 +24,5 @@ import org.sakaiproject.springframework.data.SpringCrudRepository;
 
 public interface ContextLogRepository extends SpringCrudRepository<ContextLog, Long> {
 
+	public List<ContextLog> getLogEntries(Context context, Boolean success, int limit);
 }

@@ -45,8 +45,10 @@ import javax.servlet.http.HttpServletRequest;
 import org.sakaiproject.plus.api.PlusService;
 import org.sakaiproject.plus.api.model.Tenant;
 import org.sakaiproject.plus.api.model.Context;
+import org.sakaiproject.plus.api.model.ContextLog;
 import org.sakaiproject.plus.api.repository.TenantRepository;
 import org.sakaiproject.plus.api.repository.ContextRepository;
+import org.sakaiproject.plus.api.repository.ContextLogRepository;
 
 import javax.annotation.Resource;
 
@@ -67,6 +69,9 @@ public class MainController {
 
 	@Autowired
 	private ContextRepository contextRepository;
+
+	@Autowired
+	private ContextLogRepository contextLogRepository;
 
 	@Autowired
 	private LTIService ltiService;

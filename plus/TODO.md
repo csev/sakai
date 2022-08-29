@@ -2,6 +2,8 @@
 TODO LIST
 =========
 
+Add contextLog entries in detail pages
+
 Make sure columns are created and grades are flowing:
     - Assignments - columns but not grades
     - Samigo

@@ -50,15 +50,6 @@ public class ScoreRepositoryImpl extends SpringCrudRepositoryImpl<Score, String>
 				.createQuery(cq)
 				.uniqueResult();
 		return result;
-
-		/* TODO: Remove old Hibernate version
-
-		Score retval = (Score) sessionFactory.getCurrentSession().createCriteria(Score.class)
-			.add(Restrictions.eq("subject", subject))
-			.add(Restrictions.eq("gradeBookColumnId", gradeBookColumn))
-			.uniqueResult();
-		return retval;
-		*/
 	}
 
 	// https://www.baeldung.com/hibernate-criteria-queries
@@ -78,17 +69,6 @@ public class ScoreRepositoryImpl extends SpringCrudRepositoryImpl<Score, String>
 				.createQuery(cd)
 				.executeUpdate();
 		return count;
-
-		/*
-		/* TODO: Remove old Hibernate version
-
-		return sessionFactory.getCurrentSession()
-			.createQuery("delete from org.sakaiproject.plus.api.model.Score where SAKAI_GRADABLE_OBJECT_ID = :gradeBookColumn and SUBJECT_GUID = :subject")
-			.setString("subject", subject.getId())
-			.setLong("gradeBookColumn", gradeBookColumn)
-			.executeUpdate();
-		*/
-
 	}
 
 	// vim: tabstop=4 noet

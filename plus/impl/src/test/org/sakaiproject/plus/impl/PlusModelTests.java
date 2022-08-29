@@ -76,6 +76,7 @@ import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.plus.api.model.Tenant;
 import org.sakaiproject.plus.api.model.Subject;
 import org.sakaiproject.plus.api.model.Context;
+import org.sakaiproject.plus.api.model.ContextLog;
 import org.sakaiproject.plus.api.model.Link;
 import org.sakaiproject.plus.api.model.LineItem;
 import org.sakaiproject.plus.api.model.Score;
@@ -373,6 +374,54 @@ public class PlusModelTests extends AbstractTransactionalJUnit4SpringContextTest
 		gradeBookColumn = new Long(1000);
 		count = scoreRepository.deleteBySubjectAndColumn(subject, gradeBookColumn);
 		assertEquals(count, new Integer(0));
+
+		// Test ContextLog
+		ContextLog cLog = new ContextLog();
+		cLog.setContext(context);
+		cLog.setType(ContextLog.LOG_TYPE.NRPS_TOKEN);
+		cLog.setAction("cool action 1");
+		cLog.setSuccess(Boolean.FALSE);
+		cLog.setDebugLog("I am debug string");
+		contextLogRepository.save(cLog);
+
+		List<ContextLog> logList = contextLogRepository.getLogEntries(context, Boolean.FALSE, 5);
+		assertEquals(logList.size(), 1);
+		logList = contextLogRepository.getLogEntries(context, Boolean.TRUE, 5);
+		assertEquals(logList.size(), 0);
+		logList = contextLogRepository.getLogEntries(context, null, 5);
+		assertEquals(logList.size(), 1);
+
+		ContextLog cl0 = logList.get(0);
+		assertNotNull(cl0.getCreatedAt());
+		assertEquals(cl0.getType(), ContextLog.LOG_TYPE.NRPS_TOKEN);
+		assertEquals(cl0.getAction(), "cool action 1");
+
+		Instant reallyOld = Instant.ofEpochSecond(1234567);
+
+		cLog = new ContextLog();
+		cLog.setContext(context);
+		cLog.setType(ContextLog.LOG_TYPE.NRPS_TOKEN);
+		cLog.setAction("old action 1");
+		cLog.setSuccess(Boolean.FALSE);
+		cLog.setDebugLog("I am debug string");
+		cLog.setCreatedAt(reallyOld);
+		contextLogRepository.save(cLog);
+
+		logList = contextLogRepository.getLogEntries(context, null, 5);
+		assertEquals(logList.size(), 2);
+
+		cl0 = logList.get(0);
+		assertNotNull(cl0.getCreatedAt());
+		assertEquals(cl0.getType(), ContextLog.LOG_TYPE.NRPS_TOKEN);
+		assertEquals(cl0.getAction(), "cool action 1");
+
+		ContextLog cl1 = logList.get(1);
+		assertEquals(cl1.getCreatedAt(), reallyOld);
+		assertEquals(cl1.getType(), ContextLog.LOG_TYPE.NRPS_TOKEN);
+		assertEquals(cl1.getAction(), "old action 1");
+
+		logList = contextLogRepository.getLogEntries(context, Boolean.TRUE, 5);
+		assertEquals(logList.size(), 0);
 	}
 
 	@Test
