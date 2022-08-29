@@ -255,6 +255,11 @@ public class MainController {
 		model.addAttribute("tenantId", context.getTenant().getId());
 		model.addAttribute("context", context);
 
+		List<ContextLog> failures = contextLogRepository.getLogEntries(context, Boolean.FALSE, 10);
+		model.addAttribute("failures", failures);
+		List<ContextLog> successes = contextLogRepository.getLogEntries(context, Boolean.TRUE, 10);
+		model.addAttribute("successes", successes);
+
 		return "context";
 	}
 
