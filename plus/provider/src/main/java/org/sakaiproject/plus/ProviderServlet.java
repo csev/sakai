@@ -159,6 +159,9 @@ public class ProviderServlet extends HttpServlet {
 
 	private static final String CACHE_NAME = ProviderServlet.class.getName() + "_cache";
 
+	// Wait five minutes between successive calls to NRPS.
+	public final long delayNRPS = 300;
+
 	// All loaded from the component manager
 	private SiteMembershipUpdater siteMembershipUpdater = null;
 	private SiteMembershipsSynchroniser siteMembershipsSynchroniser  = null;
@@ -606,7 +609,21 @@ public class ProviderServlet extends HttpServlet {
 			plusService.invokeProcessors(payload, PlusService.ProcessingState.afterSiteMembership, user, site);
 
 			String contextGuid = (String) payload.get("context_guid");
-			if ( contextGuid != null ) syncSiteMembershipsOnceThenSchedule(contextGuid, site);
+			if ( contextGuid != null && launch.getContext() != null ) {
+				Instant lastRun = launch.getContext().getNrpsStart();
+				long delta = -1;
+				if ( lastRun != null ) {
+					long lastRunEpoch = lastRun.getEpochSecond();
+					long nowEpoch = Instant.now().getEpochSecond();
+					delta = nowEpoch - lastRunEpoch;
+				}
+
+				if ( delta < 0 || delta > delayNRPS ) {
+					syncSiteMembershipsOnceThenSchedule(contextGuid, site);
+				} else {
+					log.info("Waiting {} seconds between NRPS calls context={} delta={}", delayNRPS, contextGuid, delta);
+				}
+			}
 
 			plusService.invokeProcessors(payload, PlusService.ProcessingState.beforeLaunch, user, site);
 
