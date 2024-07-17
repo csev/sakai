@@ -107,6 +107,7 @@ public class DBLTIService extends BaseLTIService implements LTIService {
 			foorm.autoDDL("lti_content", LTIService.CONTENT_MODEL, m_sql, m_autoDdl, doReset);
 			foorm.autoDDL("lti_tools", LTIService.TOOL_MODEL, m_sql, m_autoDdl, doReset);
 			foorm.autoDDL("lti_memberships_jobs", LTIService.MEMBERSHIPS_JOBS_MODEL, m_sql, m_autoDdl, doReset);
+			foorm.autoDDL("lti_tool_site", LTIService.TOOL_SITE_MODEL, m_sql, m_autoDdl, doReset);
 			super.init();
 		} catch (Exception t) {
 			log.warn("init(): ", t);

@@ -180,6 +180,16 @@ public interface LTIService extends LTISubstitutionsFilter {
             "memberships_url:text:maxlength=4000:required=true",
             "consumerkey:text:label=bl_consumerkey:allowed=true:maxlength=1024",
             "lti_version:text:maxlength=32:required=true"};
+
+    String[] TOOL_SITE_MODEL = {
+            "id:key",
+            "title:text:label=bl_title:required=true:maxlength=1024",
+            "tool_id:integer:hidden=true",
+            "SITE_ID:text:maxlength=99:role=admin",
+            "allowtitle:radio:label=bl_allowtitle:choices=disallow,allow",
+            "created_at:autodate",
+            "updated_at:autodate"};
+
     /**
      * Static constants for data fields
      */
