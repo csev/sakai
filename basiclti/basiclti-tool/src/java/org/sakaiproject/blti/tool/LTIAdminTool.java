@@ -2717,9 +2717,13 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 			Long isCI = foorm.getLong(lt.get(LTIService.LTI_MT_LINKSELECTION));
 			if ( isCI > 0 ) {
 				toolsCI.add(lt);
+<<<<<<< Updated upstream
 			}
 
 			if (foorm.getLong(lt.get(LTIService.LTI_MT_LAUNCH)) > 0) {
+=======
+			} else {
+>>>>>>> Stashed changes
 				toolsLaunch.add(lt);
 			}
 		}
