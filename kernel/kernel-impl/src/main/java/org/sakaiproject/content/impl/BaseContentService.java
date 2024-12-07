@@ -4468,32 +4468,26 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 		String resource_type = edit.getResourceType();
 
 		// KNL-245 do not read the resource body, as this is not subsequently written out
-		
+
 		ResourceProperties properties = edit.getProperties();
 
 		InputStream content = null;
-		try
-		{
+		try {
 			content = edit.streamContent();
 			addDeleteResource(id, 
 				content_type, content_sha256, content, resource_type, edit.getReleaseDate(), edit.getRetractDate(),
 				properties, uuid, userId,
 				NotificationService.NOTI_OPTIONAL);
-		}
-		finally
-		{
-			if (content != null)
-			{
-				try
-				{
+		} finally {
+			if (content != null) {
+				try {
 					content.close();
 				}
-				catch (IOException e)
-				{
-					log.error("Failed to close when saving deleted content stream.", e);
+				catch (IOException e) {
+					log.error("Failed to close when saving deleted content stream: {}", e.toString());
 				}
 			}
-		}
+	   	}
 	}
 
 	public ContentResource addDeleteResource(String id, String type, String sha256, InputStream inputStream, String resourceType, Time releaseDate, Time retractDate, ResourceProperties properties, String uuid, String userId, int priority) throws PermissionException, ServerOverloadException
@@ -5664,10 +5658,9 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 		}
 		log.debug("checkUpdateContentEncoding(" + edit.getId() + ")");
 
-		InputStream content = null;
 		boolean updated = false;
-		try
-		{
+		try (InputStream content = edit.streamContent()) {
+
 			//no point in doing this for 0 size resources
 			if (edit.getContentLength() == 0)
 			{
@@ -5681,7 +5674,6 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 			}
 			String encoding = null;
 			CharsetDetector detector = new CharsetDetector();
-			content = edit.streamContent();
 			//we don't want the whole file the first couple of bytes should do
 			int len = 1000;
 			byte[] contentBytes = new byte[len];
@@ -5723,15 +5715,6 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 			log.error(e.getMessage(), e);
 		} catch (ServerOverloadException e) {
 			log.error(e.getMessage(), e);
-		}
-		finally {
-			if (content != null) {
-				try {
-					content.close();
-				} catch (IOException e) {
-					//not much we can do
-				}
-			}
 		}
 		return updated;
 	}
@@ -6532,12 +6515,9 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 		                }
 
 						// stream the content using a small buffer to keep memory managed
-						InputStream content = null;
-						OutputStream out = null;
-		
-						try
-						{
-							content = resource.streamContent();
+						try (InputStream content = resource.streamContent();
+							 OutputStream out = res.getOutputStream()) {
+
 							if (content == null)
 							{
 								throw new IdUnusedException(ref.getReference());
@@ -6553,8 +6533,6 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 								res.setBufferSize(STREAM_BUFFER_SIZE);
 							}
 		
-							out = res.getOutputStream();
-
 							copyRange(content, out, range.start, range.end);
 
 						}
@@ -6570,27 +6548,6 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 						catch (Exception ignore)
 						{
 						}
-						finally
-						{
-							// be a good little program and close the stream - freeing up valuable system resources
-							if (content != null)
-							{
-								content.close();
-							}
-		
-							if (out != null)
-							{
-								try
-								{
-									out.close();
-								}
-								catch (IOException ignore)
-								{
-									// ignore
-								}
-							}
-						}
-		              
 		            } else {
 
 		            	// Multipart response
@@ -6598,10 +6555,8 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 		            	res.setContentType("multipart/byteranges; boundary=" + MIME_SEPARATOR);
 
 						// stream the content using a small buffer to keep memory managed
-						OutputStream out = null;
-		
-						try
-						{
+						try (OutputStream out = res.getOutputStream()) {
+
 							// set the buffer of the response to match what we are reading from the request
 							if (len < STREAM_BUFFER_SIZE)
 							{
@@ -6612,8 +6567,6 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 								res.setBufferSize(STREAM_BUFFER_SIZE);
 							}
 		
-							out = res.getOutputStream();
-
 			            	copyRanges(resource, out, ranges.iterator(), contentType);
 
 						}
@@ -6626,22 +6579,6 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 						{
 							log.error("Swallowing exception: ", ignore.toString());
 						}
-						finally
-						{
-							// be a good little program and close the stream - freeing up valuable system resources
-							if (out != null)
-							{
-								try
-								{
-									out.close();
-								}
-								catch (IOException ignore)
-								{
-									// ignore
-								}
-							}
-						}
-		              
 		            } // output multiple ranges
 
 		        } // output partial content 
@@ -8223,50 +8160,19 @@ SiteContentAdvisorProvider, SiteContentAdvisorTypeRegistry, HardDeleteAware
 
 		// write the content to a file
 		String fileName = idManager.createUuid();
-		InputStream stream = null;
-		FileOutputStream out = null;
-		try
-		{
-			stream = resource.streamContent();
-			out = new FileOutputStream(storagePath + fileName);
+
+		try (InputStream stream = resource.streamContent();
+			 FileOutputStream out = new FileOutputStream(storagePath + fileName)) {
+
 			byte[] chunk = new byte[STREAM_BUFFER_SIZE];
 			int lenRead;
-			while ((lenRead = stream.read(chunk)) != -1)
-			{
+			while ((lenRead = stream.read(chunk)) != -1) {
 				out.write(chunk, 0, lenRead);
 			}
-		}
-		catch (IOException e)
-		{
-			log.warn("archiveResource(): while writing body for: " + resource.getId() + " : " + e);
+		} catch (IOException e) {
+			log.warn("archiveResource(): while writing body for: {} : {}", resource.getId(), e.toString());
 		} catch (ServerOverloadException e) {
-			log.warn("archiveResource(): while writing body for: " + resource.getId() + " : " + e);
-		}
-		finally
-		{
-			if (stream != null)
-			{
-				try
-				{
-					stream.close();
-				}
-				catch (IOException e)
-				{
-					log.error("IOException ", e);
-				}
-			}
-
-			if (out != null)
-			{
-				try
-				{
-					out.close();
-				}
-				catch (IOException e)
-				{
-					log.error("IOException ", e);
-				}
-			}
+			log.warn("archiveResource(): while writing body for: {} : {}", resource.getId(), e.toString());
 		}
 
 		// store the file name in the xml

@@ -21,13 +21,14 @@ package org.sakaiproject.archive.impl;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Vector;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
+import lombok.Setter;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -37,7 +38,6 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import org.sakaiproject.archive.api.ArchiveService;
-import org.sakaiproject.authz.api.AuthzGroup;
 import org.sakaiproject.authz.api.AuthzGroupService;
 import org.sakaiproject.authz.api.SecurityService;
 import org.sakaiproject.component.cover.ComponentManager;
@@ -55,49 +55,24 @@ import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.util.Xml;
 
 @Slf4j
+@Setter
 public class SiteMerger {
-	protected static HashMap userIdTrans = new HashMap();
-	
-	/**********************************************/
-	/* Injected Dependencies                      */
-	/**********************************************/
-	protected AuthzGroupService m_authzGroupService = null;
-	public void setAuthzGroupService(AuthzGroupService service) {
-		m_authzGroupService = service;
-	}
-	
-	protected UserDirectoryService m_userDirectoryService = null;
-	public void setUserDirectoryService(UserDirectoryService service) {
-		m_userDirectoryService = service;
-	}
-	
-	protected SiteService m_siteService = null;
-	public void setSiteService(SiteService service) {
-		m_siteService = service;
-	}
-	
-	protected SecurityService m_securityService = null;
-	public void setSecurityService(SecurityService service) {
-		m_securityService = service;
-	}
-	
-    protected EntityManager m_entityManager = null;
-    public void setEntityManager(EntityManager m_entityManager) {
-        this.m_entityManager = m_entityManager;
-    }
 
-    //	 only the resources created by the followinng roles will be imported
-	// role sets are different to different system
-	//public String[] SAKAI_roles = m_filteredSakaiRoles; //= {"Affiliate", "Assistant", "Instructor", "Maintain", "Organizer", "Owner"};
-	
+	private AuthzGroupService authzGroupService;
+	private UserDirectoryService userDirectoryService;
+	private SiteService siteService;
+	private SecurityService securityService;
+	private EntityManager entityManager;
+
 	// tool id updates
+	// TODO: Do we need to swap these any more?
 	private String old_toolId_prefix = "chef.";
 	private String new_toolId_prefix = "sakai.";
 	private String[] old_toolIds = {"sakai.noti.prefs", "sakai.presence", "sakai.siteinfogeneric", "sakai.sitesetupgeneric", "sakai.threadeddiscussion"};
 	private String[] new_toolIds = {"sakai.preferences", "sakai.online", "sakai.siteinfo", "sakai.sitesetup", "sakai.discussion"};
 	
 	//SWG TODO I have a feeling this is a bug
-	protected HashSet<String> usersListAllowImport = new HashSet<String>(); 
+	protected Set<String> usersListAllowImport = new HashSet<>(); 
 	/**
 	* Process a merge for the file, or if it's a directory, for all contained files (one level deep).
 	* @param fileName The site name (for the archive file) to read from.
@@ -114,84 +89,76 @@ public class SiteMerger {
 		File[] files = null;
 
 		// see if the name is a directory
-		File file = new File(m_storagePath + fileName);
-		if ((file == null) || (!file.exists()))
+		File archiveFile = new File(m_storagePath + fileName);
+		if ((archiveFile == null) || (!archiveFile.exists()))
 		{
 			results.append("file: " + fileName + " not found.\n");
-			log.warn("merge(): file not found: " + file.getPath());
+			log.warn("merge(): file not found: {}", archiveFile.getPath());
 			return results.toString();
 		} else {
 			try {
 				// Path outside archive location, discard !
 				File baseLocation = new File(m_storagePath);
-				if (!file.getCanonicalPath().startsWith(baseLocation.getCanonicalPath())) {
+				if (!archiveFile.getCanonicalPath().startsWith(baseLocation.getCanonicalPath())) {
 					throw new Exception();
-		}
+				}
 			} catch (Exception ex) {
 				results.append("file: " + fileName + " not permitted.\n");
-				log.warn("merge(): file not permitted: " + file.getPath());
+				log.warn("merge(): file not permitted: {}", archiveFile.getPath());
 				return results.toString();
 			}
 		}
 
-		if (file.isDirectory())
+		if (archiveFile.isDirectory())
 		{
-			files = file.listFiles();
+			files = archiveFile.listFiles();
 		}
 		else
 		{
 			files = new File[1];
-			files[0] = file;
+			files[0] = archiveFile;
 		}
 
 		// track old to new attachment names
-		Map attachmentNames = new HashMap();		
-		
+		Map<String, String> attachmentNames = new HashMap<>();
+
 		// firstly, merge the users
-		for (int i = 0; i < files.length; i++)
-		{
-			if ((files[i] != null) && (files[i].getPath().indexOf("user.xml") != -1))
-			{
-				processMerge(files[i].getPath(), siteId, results, attachmentNames, null, filterSakaiServices, filteredSakaiServices, filterSakaiRoles, filteredSakaiRoles);
-				files[i] = null;
+		for (File file : files) {
+			if (file != null && file.getPath().indexOf("user.xml") != -1) {
+				processMerge(file.getPath(), siteId, results, attachmentNames, null, filterSakaiServices, filteredSakaiServices, filterSakaiRoles, filteredSakaiRoles);
+				file = null;
 				break;
 			}
 		}
-		
+
 		// see if there's a site definition
-		for (int i = 0; i < files.length; i++)
-		{
-			if ((files[i] != null) && (files[i].getPath().indexOf("site.xml") != -1))
-			{
-				processMerge(files[i].getPath(), siteId, results, attachmentNames, creatorId, filterSakaiServices, filteredSakaiServices, filterSakaiRoles, filteredSakaiRoles);
-				files[i] = null;
+		for (File file : files) {
+			if (file != null && file.getPath().indexOf("site.xml") != -1) {
+				processMerge(file.getPath(), siteId, results, attachmentNames, creatorId, filterSakaiServices, filteredSakaiServices, filterSakaiRoles, filteredSakaiRoles);
+				file = null;
 				break;
 			}
 		}
 
 		// see if there's an attachments definition
-		for (int i = 0; i < files.length; i++)
-		{
-			if ((files[i] != null) && (files[i].getPath().indexOf("attachment.xml") != -1))
-			{
-				processMerge(files[i].getPath(), siteId, results, attachmentNames, null, filterSakaiServices, filteredSakaiServices, filterSakaiRoles, filteredSakaiRoles);
-				files[i] = null;
+		for (File file : files) {
+			if (file != null && file.getPath().indexOf("attachment.xml") != -1) {
+				processMerge(file.getPath(), siteId, results, attachmentNames, null, filterSakaiServices, filteredSakaiServices, filterSakaiRoles, filteredSakaiRoles);
+				file = null;
 				break;
 			}
 		}
 
 		// process each remaining file that is an .xml file
-		for (int i = 0; i < files.length; i++)
-		{
-			if (files[i] != null)
-				if (files[i].getPath().endsWith(".xml"))
-					processMerge(files[i].getPath(), siteId, results, attachmentNames, null, filterSakaiServices, filteredSakaiServices, filterSakaiRoles, filteredSakaiRoles);
+		for (File file : files) {
+			if (file != null && file.getPath().endsWith(".xml")) {
+				processMerge(file.getPath(), siteId, results, attachmentNames, null, filterSakaiServices, filteredSakaiServices, filterSakaiRoles, filteredSakaiRoles);
+			}
 		}
 
 		return results.toString();
-
 	}	// merge
-	
+
 	/**
 	* Read in an archive file and merge the entries into the specified site.
 	* @param fileName The site name (for the archive file) to read from.
@@ -201,21 +168,20 @@ public class SiteMerger {
 	* @param useIdTrans A map of old WorkTools id to new Ctools id
 	* @param creatorId The creator id
 	*/
-	protected void processMerge(String fileName, String siteId, StringBuilder results, Map attachmentNames, String creatorId, boolean filterSakaiService, String[] filteredSakaiService, boolean filterSakaiRoles, String[] filteredSakaiRoles)
+	protected void processMerge(String fileName, String siteId, StringBuilder results, Map<String, String> attachmentNames, String creatorId, boolean filterSakaiService, String[] filteredSakaiService, boolean filterSakaiRoles, String[] filteredSakaiRoles)
 	{
 		// correct for windows backslashes
 		fileName = fileName.replace('\\', '/');
 
-		if (log.isDebugEnabled())
-			log.debug("merge(): processing file: " + fileName);
+		log.debug("merge(): processing file: {}", fileName);
 
 		Site theSite = null;
 		try
 		{
-			theSite = m_siteService.getSite(siteId);
+			theSite = siteService.getSite(siteId);
 		}
 		catch (IdUnusedException ignore) {
-			log.info("Site not found for id:"+siteId+". New site will be created.");
+			log.info("Site not found for id: {}. New site will be created.");
 		}
 
 		// read the whole file into a DOM
@@ -250,18 +216,7 @@ public class SiteMerger {
 			// look for site stuff
 			if (element.getTagName().equals(SiteService.APPLICATION_ID))
 			{	
-				//if the xml file is from WT site, merge it with the translated user ids
-				//if (system.equalsIgnoreCase(ArchiveService.FROM_WT))
-				//	mergeSite(siteId, fromSite, element, userIdTrans, creatorId);
-				//else
-				mergeSite(siteId, fromSite, element, new HashMap()/*empty userIdMap */, creatorId, filterSakaiRoles, filteredSakaiRoles);
-			}
-			else if (element.getTagName().equals(UserDirectoryService.APPLICATION_ID))
-			{	;
-				// Apparently, users have only been merged in they are from WorkTools...
-				// Is this every going to be wanted in Sakai?
-				//	String msg = mergeUsers(element, userIdTrans);
-				//	results.append(msg);
+				mergeSite(siteId, fromSite, element, Collections.EMPTY_MAP, creatorId, filterSakaiRoles, filteredSakaiRoles);
 			}
 
 			else
@@ -290,7 +245,7 @@ public class SiteMerger {
 					EntityProducer service = (EntityProducer) ComponentManager.get(serviceName);
                     if (service == null) {
                         // find the service using the EntityManager
-                        Collection<EntityProducer> entityProducers = m_entityManager.getEntityProducers();
+                        Collection<EntityProducer> entityProducers = entityManager.getEntityProducers();
                         for (EntityProducer entityProducer : entityProducers) {
                             if (serviceName.equals(entityProducer.getClass().getName())
                                     || serviceName.equals(entityProducer.getLabel())
@@ -309,28 +264,28 @@ public class SiteMerger {
 						        if (checkSakaiService(filterSakaiService, filteredSakaiService, serviceName)) {
 						            // checks passed so now we attempt to do the merge
 		                            log.debug("Merging archive data for {} ({}) to site {}", serviceName, fileName, siteId);
-		                            msg = service.merge(siteId, element, fileName, fromSite, attachmentNames, new HashMap() /* empty userIdTran map */, usersListAllowImport);
+		                            msg = service.merge(siteId, element, fileName, fromSite, attachmentNames, Collections.EMPTY_MAP /* empty userIdTran map */, usersListAllowImport);
 						        } else {
-						            log.warn("Skipping merge archive data for "+serviceName+" ("+fileName+") to site "+siteId+", checked filter failed (filtersOn="+filterSakaiService+", filters="+Arrays.toString(filteredSakaiService)+")");
+						            log.warn("Skipping merge archive data for {} ({}) to site {}, checked filter failed (filtersOn={}, filters={})", serviceName, fileName, siteId, filterSakaiService, Arrays.toString(filteredSakaiService));
 						        }
 						    } else {
-						        log.warn("Skipping archive data for for "+serviceName+" ("+fileName+") to site "+siteId+", this does not appear to be a sakai archive");
+						        log.warn("Skipping archive data for for {} ({}) to site {}, this does not appear to be a sakai archive", serviceName, fileName, siteId);
 						    }
 						} else {
-                            log.warn("Skipping archive data for for "+serviceName+" ("+fileName+") to site "+siteId+", no service (EntityProducer) could be found to deal with this data");
+                            log.warn("Skipping archive data for for {} ({}) to site {}, no service (EntityProducer) could be found to deal with this data", serviceName, fileName, siteId);
 						}
 						results.append(msg);
 					}
 					catch (Throwable t)
 					{
 						results.append("Error merging: " + serviceName + " in file: " + fileName + " : " + t.toString() + "\n");
-						log.warn("Error merging: " + serviceName + " in file: " + fileName + " : " + t.toString(),t);
+						log.warn("Error merging: {} in file: {} : {}", serviceName, fileName, t.toString());
 					}
 				}
 				catch (Throwable t)
 				{
 					results.append("Did not recognize the resource service: " + serviceName + " in file: " + fileName + "\n");
-					log.warn("Did not recognize the resource service: " + serviceName + " in file: " + fileName, t);
+					log.warn("Did not recognize the resource service: {} in file: {} : {}", serviceName, fileName, t.toString());
 				}
 			}
 		}
@@ -345,36 +300,33 @@ public class SiteMerger {
 	* @param element The XML DOM tree of messages to merge.
 	* @param creatorId The creator id
 	*/
-	protected void mergeSite(String siteId, String fromSiteId, Element element, HashMap useIdTrans, String creatorId, boolean filterSakaiRoles, String[] filteredSakaiRoles)
+	protected void mergeSite(String siteId, String fromSiteId, Element element, Map<String, String> useIdTrans, String creatorId, boolean filterSakaiRoles, String[] filteredSakaiRoles)
 	{
 		String source = "";
 					
 		Node parent = element.getParentNode();
-		if (parent.getNodeType() == Node.ELEMENT_NODE)
-		{
-			Element parentEl = (Element)parent;
-			source = parentEl.getAttribute("system");
+		if (parent.getNodeType() == Node.ELEMENT_NODE) {
+			source = ((Element) parent).getAttribute("system");
 		}
 					
 		NodeList children = element.getChildNodes();
-		final int length = children.getLength();
-		for(int i = 0; i < length; i++)
+		for(int i = 0; i < children.getLength(); i++)
 		{
 			Node child = children.item(i);
 			if (child.getNodeType() != Node.ELEMENT_NODE) continue;
-			Element element2 = (Element)child;
+			Element element2 = (Element) child;
 			if (!element2.getTagName().equals("site")) continue;
 			
 			NodeList toolChildren = element2.getElementsByTagName("tool");
-			final int tLength = toolChildren.getLength();
-			for(int i2 = 0; i2 < tLength; i2++)
+			for(int j = 0; j < toolChildren.getLength(); j++)
 			{
-				Element element3 = (Element) toolChildren.item(i2);
+				Element element3 = (Element) toolChildren.item(j);
 				String toolId = element3.getAttribute("toolId");
 				if (toolId != null)
 				{
+					// TODO: Do we need this?
 					toolId = toolId.replaceAll(old_toolId_prefix, new_toolId_prefix);
-					for (int j = 0; j < old_toolIds.length; j++)
+					for (int k = 0; k < old_toolIds.length; k++)
 					{
 						toolId = toolId.replaceAll(old_toolIds[i], new_toolIds[i]);
 					}
@@ -385,7 +337,7 @@ public class SiteMerger {
 			// merge the site info first
 			try
 			{
-				m_siteService.merge(siteId, element2, creatorId);
+				siteService.merge(siteId, element2, creatorId);
 				mergeSiteInfo(element2, siteId);
 			}
 			catch(Exception any)
@@ -396,11 +348,11 @@ public class SiteMerger {
 			Site site = null;
 			try
 			{
-				site = m_siteService.getSite(siteId);
+				site = siteService.getSite(siteId);
 			}
 			catch (IdUnusedException e) 
 			{
-				log.warn(this + "The site with id " + siteId + " doesn't exit", e);
+				log.warn("The site with id {} doesn't exist : {}", e.toString());
 				return;
 			}
 		
@@ -435,9 +387,9 @@ public class SiteMerger {
 		throws IdInvalidException, IdUsedException, PermissionException, IdUnusedException, InUseException 
 	{
 		// heck security (throws if not permitted)
-		unlock(SiteService.SECURE_UPDATE_SITE, m_siteService.siteReference(siteId));
+		unlock(SiteService.SECURE_UPDATE_SITE, siteService.siteReference(siteId));
 	
-		Site edit = m_siteService.getSite(siteId);
+		Site edit = siteService.getSite(siteId);
 		String desc = el.getAttribute("description-enc");
 			
 		try
@@ -472,7 +424,7 @@ public class SiteMerger {
 		//edit.setTitle(title);
 		edit.setDescription(desc);
 		
-		m_siteService.save(edit);
+		siteService.save(edit);
 			 
 		return;
 		
@@ -483,10 +435,10 @@ public class SiteMerger {
 	* @param element The XML DOM tree of messages to merge.
 	* @param siteId The id of the site getting imported into.
 	*/
-	protected void mergeSiteRoles(Element el, String siteId, HashMap useIdTrans, boolean filterSakaiRoles, String[] filteredSakaiRoles) throws PermissionException
+	protected void mergeSiteRoles(Element el, String siteId, Map<String, String> useIdTrans, boolean filterSakaiRoles, String[] filteredSakaiRoles) throws PermissionException
 	{
 		// heck security (throws if not permitted)
-		unlock(SiteService.SECURE_UPDATE_SITE, m_siteService.siteReference(siteId));
+		unlock(SiteService.SECURE_UPDATE_SITE, siteService.siteReference(siteId));
 		
 		String source = "";
 		
@@ -501,17 +453,8 @@ public class SiteMerger {
 			source = parentEl.getAttribute("system");
 		}
 
-		List roles = new Vector();
-		//List maintainUsers = new Vector();
-		//List accessUsers = new Vector();
-		
-		// to add this user with this role inito this realm
-		String realmId = m_siteService.siteReference(siteId); //SWG "/site/" + siteId;
 		try
 		{
-			AuthzGroup realm = m_authzGroupService.getAuthzGroup(realmId);
-			roles.addAll(realm.getRoles());
-
 			NodeList children = el.getChildNodes();
 			final int length = children.getLength();
 			for(int i = 0; i < length; i++)
@@ -553,7 +496,7 @@ public class SiteMerger {
 		}
 		catch(Exception err)
 		{
-			log.warn("()mergeSiteRoles realm edit exception caught" + realmId,err);
+			log.warn("()mergeSiteRoles site {} edit exception caught: {}", siteId, err.toString());
 		}
 		return;
 	
@@ -614,7 +557,7 @@ public class SiteMerger {
 		*/
 		protected void unlock(String lock, String reference) throws PermissionException
 		{
-			if (!m_securityService.unlock(lock, reference))
+			if (!securityService.unlock(lock, reference))
 			{
 				// needs to bring back: where is sessionService
 				// throw new PermissionException(UsageSessionService.getSessionUserId(), lock, reference);
