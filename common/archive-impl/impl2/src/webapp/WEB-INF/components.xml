@@ -74,6 +74,7 @@
 		<property name="ltiService" ref="org.sakaiproject.lti.api.LTIService" />
 		<property name="contentHostingService" ref="org.sakaiproject.content.api.ContentHostingService" />
 		<property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService"/>
+		<property name="eventTrackingService" ref="org.sakaiproject.event.api.EventTrackingService"/>
 	</bean>
 	
 	<bean id="org_sakaiproject_archive_impl_SiteZipper"

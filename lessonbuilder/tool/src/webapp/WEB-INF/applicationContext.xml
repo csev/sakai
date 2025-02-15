@@ -400,6 +400,7 @@ simplePageBean.addForumSummary,
 		<property name="simplePageToolDao" ref="org.sakaiproject.lessonbuildertool.model.SimplePageToolDao"/>
 		<property name="siteService" ref="org.sakaiproject.site.api.SiteService"/>
 		<property name="archiveService" ref="org.sakaiproject.archive.api.ArchiveService"/>
+		<property name="eventTrackingService" ref="org.sakaiproject.event.api.EventTrackingService"/>
 	</bean>
 
 	<bean id="org.sakaiproject.lessonbuildertool.ccexport.CCUtils"

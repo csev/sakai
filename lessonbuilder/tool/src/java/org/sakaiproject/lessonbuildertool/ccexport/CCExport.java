@@ -52,11 +52,13 @@ import org.sakaiproject.content.api.ContentEntity;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.entity.api.ResourceProperties;
+import org.sakaiproject.event.api.EventTrackingService;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.lessonbuildertool.util.ResourceLoaderMessageSource;
+import org.sakaiproject.event.api.NotificationService;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.tool.api.SessionManager;
@@ -84,6 +86,7 @@ public class CCExport {
     @Setter private SimplePageToolDao simplePageToolDao;
     @Setter private SiteService siteService;
     @Setter private ArchiveService archiveService;
+    @Setter private EventTrackingService eventTrackingService;
 
     private ResourceLoaderMessageSource messageSource;
 
@@ -182,6 +185,7 @@ public class CCExport {
             ZipEntry zipEntry = new ZipEntry("cc-objects/export-errors.txt");
             out.putNextEntry(zipEntry);
             ccConfig.getResults().forEach(out::println);
+            eventTrackingService.post(eventTrackingService.newEvent("cc.export", "bobwashere", siteId, true, NotificationService.NOTI_OPTIONAL));
         } catch (IOException ioe) {
             log.error("Lessons export error streaming file, {}", ioe.toString());
             setErrKey("simplepage.exportcc-fileerr", ioe.getMessage(), ccConfig.getLocale());

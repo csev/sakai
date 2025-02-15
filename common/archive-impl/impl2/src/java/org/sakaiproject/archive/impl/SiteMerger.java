@@ -56,6 +56,8 @@ import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.IdUsedException;
 import org.sakaiproject.exception.InUseException;
 import org.sakaiproject.exception.PermissionException;
+import org.sakaiproject.event.api.EventTrackingService;
+import org.sakaiproject.event.api.NotificationService;
 import org.sakaiproject.lti.api.LTIService;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
@@ -78,6 +80,7 @@ public class SiteMerger {
 	@Setter protected SecurityService securityService;
 	@Setter protected EntityManager entityManager;
 	@Setter protected ServerConfigurationService serverConfigurationService;
+	@Setter protected EventTrackingService eventTrackingService;
 
     //	 only the resources created by the followinng roles will be imported
 	// role sets are different to different system
@@ -243,6 +246,8 @@ public class SiteMerger {
 				log.warn("Error removing collection {}: {}", collectionId, e.getMessage());
 			}
 		}
+
+		eventTrackingService.post(eventTrackingService.newEvent("cc.import", "bobwashere", siteId, true, NotificationService.NOTI_OPTIONAL));
 
 		return results.toString();
 
