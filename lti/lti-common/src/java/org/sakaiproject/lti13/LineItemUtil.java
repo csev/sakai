@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Date;
+import java.util.Collection;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -300,18 +301,45 @@ public class LineItemUtil {
 		List retval = new ArrayList();
 		GradingService g = (GradingService) ComponentManager
 				.get("org.sakaiproject.grading.api.GradingService");
+		org.sakaiproject.assignment.api.AssignmentService assignmentService = ComponentManager.get(org.sakaiproject.assignment.api.AssignmentService.class);
+System.out.println("assignmentService="+assignmentService);
+		LTIService ltiService = ComponentManager.get(LTIService.class);
+		System.out.println("ltiService="+ltiService);
+
 
 		pushAdvisor();
 		try {
+			Collection<org.sakaiproject.assignment.api.model.Assignment> assignments = assignmentService.getAssignmentsForContext(context_id);
 			List<Assignment> gradebookColumns = g.getAssignments(context_id);
 			for (Iterator i = gradebookColumns.iterator(); i.hasNext();) {
 				Assignment gbColumn = (Assignment) i.next();
-				if ( ! isGradebookColumnLTI(gbColumn) ) continue;
+				// if ( ! isGradebookColumnLTI(gbColumn) ) continue;
 
 				// Parse the external_id
-				// tool_id|content_id|resourceLink|tag|
+				// external_id=tool_id|content_id|resourceLink|tag|
+				// external_id=/assignment/a/af508e10-ac0f-4df5-ada6-e659bd50bba6/3ee3ed2b-1dcb-4023-86d1-bfcdfcbe1bb9
+
 				String external_id = gbColumn.getExternalId();
+System.out.println("external_id="+external_id+" context_id="+context_id);
 				if ( external_id == null || external_id.length() < 1 ) continue;
+
+				String parts1[] = external_id.split("/");
+				if ( parts1.length > 1 && parts1[1].equals("assignment") && parts1[2].equals("a") && parts1[3].equals(context_id) ) {
+					String assignmentId = parts1[4];
+					for (org.sakaiproject.assignment.api.model.Assignment a : assignments) {
+						System.out.println("a="+a.getId()+" "+a.getTitle()+" "+a.getContentId());
+						if ( assignmentId.equals(a.getId()) ) {
+							Integer assignmentContentId = a.getContentId();
+							Map<String, Object> content = ltiService.getContent(assignmentContentId.longValue(), context_id);
+							Long content_tool_id = SakaiLTIUtil.getLongKey(content.get(LTIService.LTI_TOOL_ID));
+							if ( tool_id.equals(content_tool_id) ) {
+								System.out.println("Adding assignment "+a.getId()+" "+a.getTitle()+" "+a.getContentId());
+								retval.add(gbColumn);
+								break;
+							}
+						}
+					}
+				}
 
 				String[] parts = external_id.split(ID_SEPARATOR_REGEX);
 				if ( parts.length < 1 || ! parts[0].equals(tool_id.toString()) ) continue;
@@ -319,7 +347,7 @@ public class LineItemUtil {
 				retval.add(gbColumn);
 			}
 		} catch (Throwable e) {
-			log.error("Unexpected Throwable", e.getMessage());
+			log.error("Unexpected Throwable", e.toString());
 			retval = null;
 		} finally {
 			popAdvisor();
@@ -385,7 +413,7 @@ public class LineItemUtil {
 			List gradebookColumns = g.getAssignments(context_id);
 			for (Iterator i = gradebookColumns.iterator(); i.hasNext();) {
 				Assignment gbColumn = (Assignment) i.next();
-				if ( ! isGradebookColumnLTI(gbColumn) ) continue;
+				// if ( ! isGradebookColumnLTI(gbColumn) ) continue;
 
 				if (column_label.equals(gbColumn.getName())) {
 					retval = gbColumn;
@@ -455,12 +483,14 @@ public class LineItemUtil {
 
 		List<SakaiLineItem> retval = new ArrayList<>();
 
+		System.out.println("getLineItemsForTool "+signed_placement+" "+tool_id+" "+filter);
+
 		pushAdvisor();
 		try {
 			List gradebookColumns = g.getAssignments(context_id);
 			for (Iterator i = gradebookColumns.iterator(); i.hasNext();) {
 				Assignment gbColumn = (Assignment) i.next();
-				if ( ! isGradebookColumnLTI(gbColumn) ) continue;
+				// if ( ! isGradebookColumnLTI(gbColumn) ) continue;
 
 				// Parse the external_id
 				// tool_id|content_id|resourceLink|tag|assignmentRef (optional)
