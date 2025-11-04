@@ -38,7 +38,7 @@ To build from source use these steps:
 
 You can choose a repository and branch as follows:
 
- 1. Execute `docker build --build-arg repository=https://github.com/csev/sakai.git --build-arg release=master -t sakai -f ./Dockerfile.source .` 
+ 1. Execute `docker build --build-arg repository=https://github.com/csev/sakai.git --build-arg release=master -t SAK-52129 -f ./Dockerfile.source .` 
 
 # Running this image
 
