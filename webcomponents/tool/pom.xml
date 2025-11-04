@@ -13,6 +13,11 @@
     <artifactId>webcomponents</artifactId>
     <packaging>war</packaging>
 
+    <properties>
+        <!-- Skip frontend tests if Maven tests are skipped -->
+        <skip.frontend.tests>false</skip.frontend.tests>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -131,7 +136,7 @@
                         <phase>test</phase>
                         <configuration>
                             <arguments>run test</arguments>
-                            <skip>${maven.test.skip}</skip>
+                            <skip>${skip.frontend.tests}</skip>
                         </configuration>
                     </execution>
                     <execution>
@@ -147,5 +152,34 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <!-- Skip frontend tests when maven.test.skip is true -->
+        <profile>
+            <id>skip-frontend-tests-maven-test-skip</id>
+            <activation>
+                <property>
+                    <name>maven.test.skip</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <skip.frontend.tests>true</skip.frontend.tests>
+            </properties>
+        </profile>
+        <!-- Skip frontend tests when skipTests is true -->
+        <profile>
+            <id>skip-frontend-tests-skipTests</id>
+            <activation>
+                <property>
+                    <name>skipTests</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <skip.frontend.tests>true</skip.frontend.tests>
+            </properties>
+        </profile>
+    </profiles>
 
 </project>
