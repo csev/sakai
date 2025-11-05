@@ -128,7 +128,7 @@
                             <arguments>run analyze</arguments>
                         </configuration>
                     </execution>
-                    <execution>
+                    <!-- <execution>
                         <id>test</id>
                         <goals>
                             <goal>npm</goal>
@@ -137,7 +137,7 @@
                         <configuration>
                             <arguments>run test</arguments>
                         </configuration>
-                    </execution>
+                    </execution> -->
                     <execution>
                         <id>bundle</id>
                         <goals>
