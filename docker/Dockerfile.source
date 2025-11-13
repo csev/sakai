@@ -1,4 +1,5 @@
-FROM markhobson/maven-chrome:jdk-17 as build
+FROM eclipse-temurin:17-jdk-ubuntu
+# FROM markhobson/maven-chrome:jdk-17 as build
 
 ARG release=master
 ARG repository=https://github.com/sakaiproject/sakai.git
