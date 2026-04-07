@@ -293,4 +293,5 @@ public class MockServerConfigurationService implements ServerConfigurationServic
     public String getSmtpPort() {
         throw new UnsupportedOperationException( "Not supported yet." );
     }
+
 }
