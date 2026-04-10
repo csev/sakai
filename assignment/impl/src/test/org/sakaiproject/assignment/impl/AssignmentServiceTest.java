@@ -30,6 +30,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.DecimalFormatSymbols;
@@ -56,6 +57,8 @@ import java.util.TimeZone;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.annotation.Resource;
 
@@ -137,7 +140,6 @@ public class AssignmentServiceTest extends AbstractTransactionalJUnit4SpringCont
     @Resource(name = "org.sakaiproject.time.api.UserTimeService")
     private UserTimeService userTimeService;
     @Autowired private UserDirectoryService userDirectoryService;
-
     private ResourceLoader resourceLoader;
 
     @Before
@@ -157,6 +159,15 @@ public class AssignmentServiceTest extends AbstractTransactionalJUnit4SpringCont
         when(resourceLoader.getString("assignment.copy")).thenReturn("Copy");
         when(resourceLoader.getString("listsub.nosub")).thenReturn("No Submission");
         when(resourceLoader.getString("gen.notsta")).thenReturn("Not Started");
+        when(formattedText.getDecimalSeparator()).thenReturn(".");
+        when(serverConfigurationService.getString("csv.separator", ",")).thenReturn(",");
+        when(resourceLoader.getString("grades.id")).thenReturn("ID");
+        when(resourceLoader.getString("grades.eid")).thenReturn("EID");
+        when(resourceLoader.getString("grades.lastname")).thenReturn("Last Name");
+        when(resourceLoader.getString("grades.firstname")).thenReturn("First Name");
+        when(resourceLoader.getString("grades.grade")).thenReturn("Grade");
+        when(resourceLoader.getString("grades.submissionTime")).thenReturn("Submission Time");
+        when(resourceLoader.getString("grades.late")).thenReturn("Late");
         ((AssignmentServiceImpl) AopTestUtils.getTargetObject(assignmentService)).setResourceLoader(resourceLoader);
         when(userTimeService.getLocalTimeZone()).thenReturn(TimeZone.getDefault());
     }
@@ -2308,6 +2319,58 @@ public class AssignmentServiceTest extends AbstractTransactionalJUnit4SpringCont
         verify(taskService).createUserTask(task, userTaskBean);
     }
 
+    @Test
+    public void gradeFileOnlyZipDoesNotIncludePerStudentEntries() throws Exception {
+
+        String context = UUID.randomUUID().toString();
+        Assignment assignment = createNewAssignment(context);
+        assignment.setTitle("Grade Only Download");
+        assignment.setTypeOfGrade(Assignment.GradeType.SCORE_GRADE_TYPE);
+        assignment.setTypeOfSubmission(Assignment.SubmissionType.TEXT_AND_ATTACHMENT_ASSIGNMENT_SUBMISSION);
+
+        String submitterId = UUID.randomUUID().toString();
+        AssignmentSubmission submission = createNewSubmission(context, submitterId, assignment);
+        submission.setSubmitted(true);
+        submission.setUserSubmission(true);
+        submission.setDateSubmitted(Instant.parse("2026-03-25T12:00:00Z"));
+
+        User user = mock(User.class);
+        when(user.getId()).thenReturn(submitterId);
+        when(user.getDisplayId()).thenReturn("student1");
+        when(user.getEid()).thenReturn("student1");
+        when(user.getFirstName()).thenReturn("Student");
+        when(user.getLastName()).thenReturn("One");
+        when(user.getSortName()).thenReturn("One, Student");
+        when(userDirectoryService.getUser(submitterId)).thenReturn(user);
+
+        String assignmentReference = AssignmentReferenceReckoner.reckoner().assignment(assignment).reckon().getReference();
+        String contextReference = AssignmentReferenceReckoner.reckoner().context(context).reckon().getReference();
+        String siteReference = "/site/" + context;
+        Site site = mock(Site.class);
+        AuthzGroup authzGroup = mock(AuthzGroup.class);
+
+        when(site.getReference()).thenReturn(siteReference);
+        when(siteService.getSite(context)).thenReturn(site);
+        when(siteService.siteReference(context)).thenReturn(siteReference);
+        when(authzGroup.getUsers()).thenReturn(Collections.singleton(submitterId));
+        when(authzGroupService.getAuthzGroup(siteReference)).thenReturn(authzGroup);
+        when(securityService.unlock(AssignmentServiceConstants.SECURE_GRADE_ASSIGNMENT_SUBMISSION, assignmentReference)).thenReturn(true);
+        when(securityService.unlock(AssignmentServiceConstants.SECURE_ALL_GROUPS, siteReference)).thenReturn(true);
+        when(securityService.unlockUsers(AssignmentServiceConstants.SECURE_ADD_ASSIGNMENT_SUBMISSION, assignmentReference))
+                .thenReturn(Collections.singletonList(user));
+        when(securityService.unlockUsers(AssignmentServiceConstants.SECURE_ADD_ASSIGNMENT, contextReference))
+                .thenReturn(Collections.emptyList());
+        when(serverConfigurationService.getInt("zip.compression.level", 1)).thenReturn(1);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        assignmentService.getSubmissionsZip(outputStream, assignmentReference,
+                "gradeFile&gradeFileFormat=csv&contextString=" + context);
+
+        List<String> entryNames = readZipEntryNames(outputStream.toByteArray());
+
+        Assert.assertEquals(1, entryNames.size());
+        Assert.assertTrue(entryNames.get(0).endsWith("/grades.csv"));
+    }
+
     private AssignmentSubmission createNewSubmission(String context, String submitterId, Assignment assignment) throws UserNotDefinedException, IdUnusedException {
 
         if (assignment == null) {
@@ -2438,6 +2501,17 @@ public class AssignmentServiceTest extends AbstractTransactionalJUnit4SpringCont
         nf.setMinimumFractionDigits(dec);
         nf.setGroupingUsed(false);
         when(formattedText.getNumberFormat(dec, dec, false)).thenReturn(nf);
+    }
+
+    private List<String> readZipEntryNames(byte[] zipBytes) throws Exception {
+        List<String> entryNames = new ArrayList<>();
+        try (ZipInputStream zipInputStream = new ZipInputStream(new java.io.ByteArrayInputStream(zipBytes))) {
+            ZipEntry entry;
+            while ((entry = zipInputStream.getNextEntry()) != null) {
+                entryNames.add(entry.getName());
+            }
+        }
+        return entryNames;
     }
 
     private AssignmentSubmission duplicateSubmission(AssignmentSubmission submission) {
