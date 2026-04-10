@@ -52,6 +52,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+
+import java.text.MessageFormat;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -285,6 +287,19 @@ public class AutoConfigController {
 
 
 	public void handleNewTeamCreation(AutoConfigSessionBean autoConfigSessionBean, Site site, String teamName, ZonedDateTime syncDateFrom, ZonedDateTime syncDateTo, MicrosoftCredentials credentials) throws Exception {
+		//check if team name already exists
+		if(microsoftCommonService.existsTeamWithName(teamName)) {
+			autoConfigSessionBean.addError(site.getId(), site.getTitle(), MessageFormat.format(rb.getString("error.team_name_already_exists"), teamName));
+			microsoftLoggingService.saveLog(MicrosoftLog.builder()
+					.event(MicrosoftLog.ERROR_TEAM_NAME_ALREADY_EXISTS)
+					.status(MicrosoftLog.Status.KO)
+					.addData("origin", MicrosoftLogInvokers.MANUAL.getCode())
+					.addData("siteId", site.getId())
+					.addData("teamTitle", teamName)
+					.build());
+			return;
+		}
+
 		String teamId = microsoftCommonService.createTeam(teamName, credentials.getEmail());
 		SiteSynchronization ss = SiteSynchronization.builder()
 				.siteId(site.getId())
