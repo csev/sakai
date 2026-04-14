@@ -24,6 +24,8 @@ import org.junit.runner.RunWith;
 import org.sakaiproject.api.common.edu.person.SakaiPerson;
 import org.sakaiproject.api.common.edu.person.SakaiPersonManager;
 import org.sakaiproject.authz.api.SecurityService;
+import org.sakaiproject.profile2.api.ProfileConstants;
+import org.sakaiproject.profile2.api.ProfileImage;
 import org.sakaiproject.profile2.api.ProfileService;
 import org.sakaiproject.profile2.api.ProfileTransferBean;
 import org.sakaiproject.profile2.api.repository.SocialNetworkingInfoRepository;
@@ -54,6 +56,7 @@ public class ProfileServiceTests extends AbstractTransactionalJUnit4SpringContex
     @Autowired private UserDirectoryService userDirectoryService;
 
     private String user1Id = UUID.randomUUID().toString();
+    private String user2Id = UUID.randomUUID().toString();
     private String site1Id = UUID.randomUUID().toString();
     private User user1;
 
@@ -61,6 +64,8 @@ public class ProfileServiceTests extends AbstractTransactionalJUnit4SpringContex
     public void setup() {
 
       reset(userDirectoryService);
+      reset(securityService);
+      reset(sessionManager);
 
       user1 = mock(User.class);
       when(user1.getCreatedBy()).thenReturn(user1);
@@ -71,6 +76,65 @@ public class ProfileServiceTests extends AbstractTransactionalJUnit4SpringContex
       when(user1.getFirstName()).thenReturn("User");
       when(user1.getLastName()).thenReturn("1");
       when(user1.getEid()).thenReturn("user1");
+    }
+
+    @Test
+    public void getProfileImageReturnsBlankImageForBlankUser() {
+
+        when(sessionManager.getCurrentSessionUserId()).thenReturn(user1Id);
+
+        ProfileImage image = profileService.getProfileImage(ProfileConstants.BLANK, ProfileConstants.PROFILE_IMAGE_MAIN, null);
+
+        assertNotNull(image);
+        assertTrue(image.isDefault());
+        assertNull(image.getAltText());
+        assertNotNull(image.getUrl());
+    }
+
+    @Test
+    public void getProfileImageReturnsBlankImageWhenRoleSwappedAndNotSuperUser() {
+
+        String otherUserId = UUID.randomUUID().toString();
+        when(sessionManager.getCurrentSessionUserId()).thenReturn(user1Id);
+        when(securityService.isUserRoleSwapped()).thenReturn(true);
+        when(securityService.isSuperUser()).thenReturn(false);
+
+        ProfileImage image = profileService.getProfileImage(otherUserId, ProfileConstants.PROFILE_IMAGE_MAIN, null);
+
+        assertNotNull(image);
+        assertTrue(image.isDefault());
+        assertNull(image.getAltText());
+        assertNotNull(image.getUrl());
+    }
+
+    @Test
+    public void getProfileImageSuperUserBypassesRoleSwappedBlanking() throws UserNotDefinedException {
+
+        when(sessionManager.getCurrentSessionUserId()).thenReturn(user2Id);
+        when(securityService.isUserRoleSwapped()).thenReturn(true);
+        when(securityService.isSuperUser()).thenReturn(true);
+        when(userDirectoryService.getUser(user1Id)).thenReturn(user1);
+
+        ProfileImage image = profileService.getProfileImage(user1Id, ProfileConstants.PROFILE_IMAGE_MAIN, null);
+
+        assertNotNull(image);
+        assertNotNull(image.getAltText());
+        assertFalse(image.getAltText().isBlank());
+    }
+
+    @Test
+    public void getProfileImageReturnsBlankImageForBlankUserWhenSuperUser() {
+
+        when(sessionManager.getCurrentSessionUserId()).thenReturn(user1Id);
+        when(securityService.isUserRoleSwapped()).thenReturn(true);
+        when(securityService.isSuperUser()).thenReturn(true);
+
+        ProfileImage image = profileService.getProfileImage(ProfileConstants.BLANK, ProfileConstants.PROFILE_IMAGE_MAIN, null);
+
+        assertNotNull(image);
+        assertTrue(image.isDefault());
+        assertNull(image.getAltText());
+        assertNotNull(image.getUrl());
     }
 
     @Test
