@@ -2163,8 +2163,7 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 			}
 
 			if ( ! checkToolHasPlacements(sat.tool_id, signed_placement, response) ) {
-				log.error("Tool={} does not have placements for site={}", sat.tool_id, signed_placement);
-				LTI13Util.return400(response, "Tool does not have placements for site");
+				// checkToolHasPlacements() already logs and writes the 400 response.
 				return;
 			}
 
@@ -2174,6 +2173,12 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 		try {
 			log.debug("Updating site={} tool_id={} column_id={} lineItem={}",site.getId(), sat.tool_id, lineitem_key, JacksonUtil.prettyPrint(item));
 			retval = LineItemUtil.updateLineItem(site, sat.tool_id, lineitem_key, item);
+			if (retval == null) {
+				log.error("Could not update lineitem, column not found or not owned by tool. site={} tool_id={} column_id={}",
+					site.getId(), sat.tool_id, lineitem_key);
+				LTI13Util.return404(response, "Could not load column");
+				return;
+			}
 			log.debug("Updated retval={}",JacksonUtil.prettyPrint(retval));
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
@@ -2181,14 +2186,18 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 			return;
 		}
 
-		// Add the link to this lineitem
-		item.id = getOurServerUrl() + LTI13_PATH + "lineitems/" + signed_placement + "/" + retval.getId();
+		// Return the line item as we would list it (assignment-backed fields from Assignments when applicable)
+		SakaiLineItem responseItem = LineItemUtil.getLineItemForToolColumn(signed_placement, site.getId(), sat.tool_id, retval);
+		if (responseItem == null) {
+			responseItem = LineItemUtil.getLineItem(signed_placement, retval);
+		}
+		responseItem.id = getOurServerUrl() + LTI13_PATH + "lineitems/" + signed_placement + "/" + retval.getId();
 
-		log.debug("Lineitem item={}",JacksonUtil.prettyPrint(item));
+		log.debug("Lineitem responseItem={}", JacksonUtil.prettyPrint(responseItem));
 		response.setContentType(SakaiLineItem.CONTENT_TYPE);
 
 		PrintWriter out = response.getWriter();
-		out.print(JacksonUtil.prettyPrint(item));
+		out.print(JacksonUtil.prettyPrint(responseItem));
 	}
 
 	/**
@@ -2393,9 +2402,12 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 			return;
 		}
 
-		// Return the line item metadata
+		// Return the line item metadata (same source as list: assignment-backed fields from Assignments when applicable)
 		if ( ! results ) {
-			SakaiLineItem item = LineItemUtil.getLineItem(signed_placement, a);
+			SakaiLineItem item = LineItemUtil.getLineItemForToolColumn(signed_placement, context_id, sat.tool_id, a);
+			if (item == null) {
+				item = LineItemUtil.getLineItem(signed_placement, a);
+			}
 
 			String json_out = JacksonUtil.prettyPrint(item);
 			log.debug("Returning {}", json_out);
