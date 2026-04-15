@@ -147,11 +147,37 @@ public class LineItemUtil {
 		return retval;
 	}
 
-	private static Long deriveContentIdFromGradebookExternalId(String external_id) {
-		if (external_id == null) {
+	private static boolean hasValidExternalIdFormat(String externalId) {
+		if (StringUtils.isBlank(externalId)) {
+			return false;
+		}
+		String[] parts = externalId.split(ID_SEPARATOR_REGEX, -1);
+		if (parts == null || parts.length < 2) {
+			return false;
+		}
+		return StringUtils.isNumeric(parts[0]) && StringUtils.isNumeric(parts[1]);
+	}
+
+	private static String getPreferredExternalId(Assignment gradebookColumn) {
+		if (gradebookColumn == null) {
 			return null;
 		}
-		String[] parts = StringUtils.split(external_id, ID_SEPARATOR_REGEX);
+
+		String externalData = StringUtils.trimToNull(gradebookColumn.getExternalData());
+		if (hasValidExternalIdFormat(externalData)) {
+			return externalData;
+		}
+
+		String externalId = StringUtils.trimToNull(gradebookColumn.getExternalId());
+		return hasValidExternalIdFormat(externalId) ? externalId : null;
+	}
+
+	private static Long deriveContentIdFromGradebookExternalId(Assignment gradebookColumn) {
+		String externalId = getPreferredExternalId(gradebookColumn);
+		if (externalId == null) {
+			return null;
+		}
+		String[] parts = StringUtils.split(externalId, ID_SEPARATOR_REGEX);
 		return (parts == null || parts.length < 2) ? null : Long.valueOf(parts[1]);
 	}
 
@@ -212,7 +238,7 @@ public class LineItemUtil {
 			}
 			// We are using the actual grade and points possible in the GB
 			gradebookColumn.setExternallyMaintained(false);
-			gradebookColumn.setExternalId(external_id);
+			gradebookColumn.setExternalData(external_id);
 			gradebookColumn.setExternalAppName(GB_EXTERNAL_APP_NAME);
 			gradebookColumn.setName(lineItem.label);
 			Boolean releaseToStudent = lineItem.releaseToStudent == null ? Boolean.TRUE : lineItem.releaseToStudent; // Default to true
@@ -254,9 +280,9 @@ public class LineItemUtil {
 	}
 
 	public static Assignment updateLineItem(Site site, Long tool_id, Long column_id, SakaiLineItem lineItem) {
+		log.debug("updateLineItem site={} tool_id={} column_id={} lineItem={}", site.getId(), tool_id, column_id, lineItem);
 		GradingService gradingService = (GradingService) ComponentManager
 				.get("org.sakaiproject.grading.api.GradingService");
-
 		String context_id = site.getId();
 
 		if ( column_id == null ) {
@@ -278,18 +304,19 @@ public class LineItemUtil {
 			  "resourceId": "string"
 			}
 		*/
+		log.debug("gradebookColumn={}", gradebookColumn);
 
 		if ( lineItem.scoreMaximum != null ) {
 			gradebookColumn.setPoints(Double.valueOf(lineItem.scoreMaximum));
 		}
 
-		Long content_id = deriveContentIdFromGradebookExternalId(gradebookColumn.getExternalId());
+		Long content_id = deriveContentIdFromGradebookExternalId(gradebookColumn);
 		String external_id = (content_id != null) ? constructExternalIdImpl(tool_id, content_id, lineItem) : constructExternalId(tool_id, null, lineItem);
 
 		log.debug("gb item id={}; gb item title={}; external_id={}; prior external_id={}; derived content id={}", gradebookColumn.getId(),
 			  gradebookColumn.getName(), external_id, gradebookColumn.getExternalId(), content_id);
 
-		gradebookColumn.setExternalId(external_id);
+		gradebookColumn.setExternalData(external_id);
 		if ( lineItem.label != null ) {
 			gradebookColumn.setName(lineItem.label);
 		}
@@ -364,14 +391,15 @@ public class LineItemUtil {
 			List<Assignment> gradebookColumns = gradingService.getAssignments(context_id, context_id, SortType.SORT_BY_NONE);
 			for (Iterator i = gradebookColumns.iterator(); i.hasNext();) {
 				Assignment gbColumn = (Assignment) i.next();
-				String external_id = gbColumn.getExternalId();
+				String external_id = getPreferredExternalId(gbColumn);
+				String assignmentExternalId = StringUtils.trimToNull(gbColumn.getExternalId());
 				if ( isGradebookColumnLTI(gbColumn) ) {
 					// We are good to go
-				} else if ( isAssignmentColumn(external_id) ) {
+				} else if ( isAssignmentColumn(assignmentExternalId) ) {
 					if ( externalIds == null ) {
 						externalIds = getExternalIdsForToolAssignments(context_id);
 					}
-					external_id = externalIds.get(external_id);
+					external_id = externalIds.get(assignmentExternalId);
 					if ( external_id == null ) continue;
 				}
 
@@ -537,15 +565,16 @@ public class LineItemUtil {
 			List gradebookColumns = gradingService.getAssignments(context_id, context_id, SortType.SORT_BY_NONE);
 			for (Iterator i = gradebookColumns.iterator(); i.hasNext();) {
 				Assignment gbColumn = (Assignment) i.next();
-				String external_id = gbColumn.getExternalId();
+				String external_id = getPreferredExternalId(gbColumn);
+				String assignmentExternalId = StringUtils.trimToNull(gbColumn.getExternalId());
 				log.debug("gbColumn: {} {}", gbColumn.getName(), external_id);
 				if ( isGradebookColumnLTI(gbColumn) ) {
 					// We are good to go
-				} else if ( StringUtils.isNotEmpty(external_id) && isAssignmentColumn(external_id) ) {
+				} else if ( StringUtils.isNotEmpty(assignmentExternalId) && isAssignmentColumn(assignmentExternalId) ) {
 					if ( externalIds == null ) {
 						externalIds = getExternalIdsForToolAssignments(context_id);
 					}
-					external_id = externalIds.get(external_id);
+					external_id = externalIds.get(assignmentExternalId);
 					log.debug("derived assignment based on external_id: {} {}", external_id, externalIds);
 					if ( external_id == null ) continue;
 				}
@@ -592,7 +621,7 @@ public class LineItemUtil {
 
 		// Parse the external_id
 		// tool_id|content_id|resourceLink|tag|
-		String external_id = assignment.getExternalId();
+		String external_id = getPreferredExternalId(assignment);
 		if ( external_id != null && external_id.length() > 0 ) {
 			String[] parts = external_id.split(ID_SEPARATOR_REGEX);
 			li.resourceLinkId = (parts.length > 1 && parts[1].trim().length() > 1) ? parts[1].trim() : null;

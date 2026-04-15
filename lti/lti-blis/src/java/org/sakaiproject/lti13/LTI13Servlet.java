@@ -2162,13 +2162,19 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 				return;
 			}
 
-			if ( ! checkToolHasPlacements(sat.tool_id, signed_placement, response) ) return;
+			if ( ! checkToolHasPlacements(sat.tool_id, signed_placement, response) ) {
+				log.error("Tool={} does not have placements for site={}", sat.tool_id, signed_placement);
+				LTI13Util.return400(response, "Tool does not have placements for site");
+				return;
+			}
 
 		}
 
 		Assignment retval;
 		try {
+			log.debug("Updating site={} tool_id={} column_id={} lineItem={}",site.getId(), sat.tool_id, lineitem_key, JacksonUtil.prettyPrint(item));
 			retval = LineItemUtil.updateLineItem(site, sat.tool_id, lineitem_key, item);
+			log.debug("Updated retval={}",JacksonUtil.prettyPrint(retval));
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 			LTI13Util.return400(response, "Could not update lineitem: "+e.getMessage());
@@ -2178,7 +2184,7 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 		// Add the link to this lineitem
 		item.id = getOurServerUrl() + LTI13_PATH + "lineitems/" + signed_placement + "/" + retval.getId();
 
-		log.debug("Lineitem item={}",item);
+		log.debug("Lineitem item={}",JacksonUtil.prettyPrint(item));
 		response.setContentType(SakaiLineItem.CONTENT_TYPE);
 
 		PrintWriter out = response.getWriter();
