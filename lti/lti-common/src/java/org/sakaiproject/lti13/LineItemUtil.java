@@ -278,7 +278,7 @@ public class LineItemUtil {
 		return null;
 	}
 
-	private static Map<String, String> parseLineItemMetadata(String lineItemMetadata) {
+	private static Map<String, String> parseLineItemMetadata(String lineItemMetadata, Assignment gradebookColumn) {
 		if (StringUtils.isBlank(lineItemMetadata)) {
 			return null;
 		}
@@ -295,6 +295,15 @@ public class LineItemUtil {
 			}
 			return parsed;
 		} catch (Exception e) {
+			log.warn(
+					"Failed to parse LINEITEM_METADATA as JSON; gradebookAssignmentId={} name={} externalId={} reference={} gradebookUid={}; rawLineItemMetadata={}",
+					gradebookColumn != null ? gradebookColumn.getId() : null,
+					gradebookColumn != null ? gradebookColumn.getName() : null,
+					gradebookColumn != null ? gradebookColumn.getExternalId() : null,
+					gradebookColumn != null ? gradebookColumn.getReference() : null,
+					gradebookColumn != null ? gradebookColumn.getGradebookUid() : null,
+					lineItemMetadata,
+					e);
 			return null;
 		}
 	}
@@ -304,7 +313,7 @@ public class LineItemUtil {
 			return null;
 		}
 
-		Map<String, String> parsedMetadata = parseLineItemMetadata(gradebookColumn.getLineItemMetadata());
+		Map<String, String> parsedMetadata = parseLineItemMetadata(gradebookColumn.getLineItemMetadata(), gradebookColumn);
 		if (parsedMetadata != null) {
 			return parsedMetadata;
 		}

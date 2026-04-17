@@ -2191,8 +2191,8 @@ public class LTI13Servlet extends HttpServlet {
 				log.debug("Updated retval={}", JacksonUtil.prettyPrint(retval));
 			}
 		} catch (PermissionException e) {
-			log.warn("Permission denied updating line item: {}", e.getMessage(), e);
-			LTI13Util.return400(response, StringUtils.defaultIfBlank(e.getMessage(), "Could not update lineitem"));
+			log.warn("Permission denied updating line item", e);
+			LTI13Util.return403(response, "Permission denied updating lineitem");
 			return;
 		} catch (RuntimeException e) {
 			log.error(e.getMessage(), e);
