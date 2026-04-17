@@ -539,7 +539,8 @@ public class LineItemUtil {
 		}
 	}
 
-	public static Assignment updateLineItem(Site site, Long tool_id, Long column_id, SakaiLineItem lineItem) {
+	public static Assignment updateLineItem(Site site, Long tool_id, Long column_id, SakaiLineItem lineItem)
+			throws PermissionException {
 		log.debug("updateLineItem site={} tool_id={} column_id={} lineItem={}", site.getId(), tool_id, column_id, lineItem);
 		GradingService gradingService = (GradingService) ComponentManager
 				.get("org.sakaiproject.grading.api.GradingService");
@@ -620,7 +621,7 @@ public class LineItemUtil {
 					}
 				} catch (PermissionException e) {
 					log.warn("Could not update linked Sakai assignment from LTI line item: {}", e.toString());
-					return null;
+					throw e;
 				}
 			} else {
 				if ( lineItem.scoreMaximum != null ) {
@@ -1117,6 +1118,9 @@ public class LineItemUtil {
 	 * Builds the {@link SakaiLineItem} for one gradebook column the same way as {@link #getLineItemsForTool}
 	 * (assignment-sourced label/points/due when applicable, resourceId/tag from gradebook metadata, resourceLinkId
 	 * from the resolved tool key).
+	 *
+	 * @return the line item for this tool, or {@code null} if the column is not included for this tool (same
+	 *         {@link LtiLineItemRowResolution#isIncludedInToolLineItemList()} gate as {@link #getLineItemsForTool})
 	 */
 	public static SakaiLineItem getLineItemForToolColumn(String signed_placement, String contextId, Long toolId,
 			Assignment gbColumn) {
@@ -1126,7 +1130,7 @@ public class LineItemUtil {
 		Map<String, String> assignmentRefToToolKey = getExternalIdsForToolAssignments(contextId);
 		LtiLineItemRowResolution r = resolveLtiLineItemRow(contextId, gbColumn, toolId, assignmentRefToToolKey);
 		if (!r.isIncludedInToolLineItemList()) {
-			return getLineItem(signed_placement, gbColumn, null);
+			return null;
 		}
 		String external_id = r.getToolContentKey();
 		SakaiLineItem li = getLineItem(signed_placement, gbColumn, r.getSakaiAssignment());

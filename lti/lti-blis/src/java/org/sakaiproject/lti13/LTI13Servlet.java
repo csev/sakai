@@ -73,6 +73,7 @@ import static org.sakaiproject.lti.util.SakaiLTIUtil.getOurServerUrl;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.exception.IdUnusedException;
+import org.sakaiproject.exception.PermissionException;
 import org.sakaiproject.lti.api.LTIService;
 import org.sakaiproject.lti13.LineItemUtil;
 
@@ -1095,10 +1096,12 @@ public class LTI13Servlet extends HttpServlet {
 
 		}
 
-		log.debug("tool={} content={} userId={}",
-			tool != null ? tool.getId() : null,
-			content != null ? content.getId() : null,
-			userId);
+		if (log.isDebugEnabled()) {
+			log.debug("tool={} content={} userId={}",
+					tool != null ? tool.getId() : null,
+					content != null ? content.getId() : null,
+					userId);
+		}
 
 		userId = SakaiLTIUtil.parseSubject(userId);
 		if (!checkUserInSite(site, userId)) {
@@ -1112,7 +1115,9 @@ public class LTI13Servlet extends HttpServlet {
 		// When lineitem_key is null we are the "default" lineitem associated with the content object
 		// if the content item is associated with an assignment, we talk to the assignment API,
 		// if the content item is not associated with an assignment, we talk to the gradebook API
-log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+content);
+		if (log.isDebugEnabled()) {
+			log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content={}", content);
+		}
 		Object retval = SakaiLTIUtil.handleGradebookLTI13(site, sat.tool_id, content, userId, lineitem_key, scoreObj);
 		log.debug("handleGradebookLTI13 retval={}",retval);
 		if ( retval instanceof String ) {
@@ -2171,7 +2176,10 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 
 		Assignment retval;
 		try {
-			log.debug("Updating site={} tool_id={} column_id={} lineItem={}",site.getId(), sat.tool_id, lineitem_key, JacksonUtil.prettyPrint(item));
+			if (log.isDebugEnabled()) {
+				log.debug("Updating site={} tool_id={} column_id={} lineItem={}", site.getId(), sat.tool_id, lineitem_key,
+						JacksonUtil.prettyPrint(item));
+			}
 			retval = LineItemUtil.updateLineItem(site, sat.tool_id, lineitem_key, item);
 			if (retval == null) {
 				log.error("Could not update lineitem, column not found or not owned by tool. site={} tool_id={} column_id={}",
@@ -2179,21 +2187,36 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 				LTI13Util.return404(response, "Could not load column");
 				return;
 			}
-			log.debug("Updated retval={}",JacksonUtil.prettyPrint(retval));
+			if (log.isDebugEnabled()) {
+				log.debug("Updated retval={}", JacksonUtil.prettyPrint(retval));
+			}
+		} catch (PermissionException e) {
+			log.warn("Permission denied updating line item: {}", e.getMessage(), e);
+			LTI13Util.return400(response, StringUtils.defaultIfBlank(e.getMessage(), "Could not update lineitem"));
+			return;
+		} catch (RuntimeException e) {
+			log.error(e.getMessage(), e);
+			LTI13Util.return400(response, StringUtils.defaultIfBlank(e.getMessage(), "Could not update lineitem"));
+			return;
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
-			LTI13Util.return400(response, "Could not update lineitem: "+e.getMessage());
+			LTI13Util.return400(response, StringUtils.defaultIfBlank(e.getMessage(), "Could not update lineitem"));
 			return;
 		}
 
 		// Return the line item as we would list it (assignment-backed fields from Assignments when applicable)
 		SakaiLineItem responseItem = LineItemUtil.getLineItemForToolColumn(signed_placement, site.getId(), sat.tool_id, retval);
 		if (responseItem == null) {
-			responseItem = LineItemUtil.getLineItem(signed_placement, retval);
+			log.error("getLineItemForToolColumn returned null after updateLineItem; site={} tool_id={} column_id={}",
+					site.getId(), sat.tool_id, lineitem_key);
+			LTI13Util.return400(response, "Could not build line item response");
+			return;
 		}
 		responseItem.id = getOurServerUrl() + LTI13_PATH + "lineitems/" + signed_placement + "/" + retval.getId();
 
-		log.debug("Lineitem responseItem={}", JacksonUtil.prettyPrint(responseItem));
+		if (log.isDebugEnabled()) {
+			log.debug("Lineitem responseItem={}", JacksonUtil.prettyPrint(responseItem));
+		}
 		response.setContentType(SakaiLineItem.CONTENT_TYPE);
 
 		PrintWriter out = response.getWriter();
@@ -2275,7 +2298,9 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 			if ( content != null ) {
 				response.setContentType(SakaiLineItem.CONTENT_TYPE);
 				SakaiLineItem item = LineItemUtil.getDefaultLineItem(site, content);
-				log.debug("single line item = {}", JacksonUtil.prettyPrint(item));
+				if (log.isDebugEnabled()) {
+					log.debug("single line item = {}", JacksonUtil.prettyPrint(item));
+				}
 				PrintWriter out = response.getWriter();
 				out.print(JacksonUtil.prettyPrint(item));
 				return;
@@ -2286,7 +2311,9 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 		}
 
 		// Find the line items created for this tool
-		log.debug("filter={}", JacksonUtil.prettyPrint(filter));
+		if (log.isDebugEnabled()) {
+			log.debug("filter={}", JacksonUtil.prettyPrint(filter));
+		}
 		List<SakaiLineItem> toolItems = LineItemUtil.getLineItemsForTool(signed_placement, site, sat.tool_id, filter);
 
 		response.setContentType(SakaiLineItem.CONTENT_TYPE_CONTAINER);
@@ -2297,7 +2324,9 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 		for (SakaiLineItem item : toolItems) {
 			out.println(first ? "" : ",");
 			first = false;
-			log.debug("line item = {}", JacksonUtil.prettyPrint(item));
+			if (log.isDebugEnabled()) {
+				log.debug("line item = {}", JacksonUtil.prettyPrint(item));
+			}
 			out.print(JacksonUtil.prettyPrint(item));
 		}
 		out.println("");
@@ -2406,7 +2435,10 @@ log.debug("calling SakaiLTIUtil.handleGradebookLTI13 bean version content="+cont
 		if ( ! results ) {
 			SakaiLineItem item = LineItemUtil.getLineItemForToolColumn(signed_placement, context_id, sat.tool_id, a);
 			if (item == null) {
-				item = LineItemUtil.getLineItem(signed_placement, a);
+				LTI13Util.return404(response, "Could not load column");
+				log.error("Line item not exposed for this tool; column_id={} context_id={} tool_id={}",
+						lineitem_key, context_id, sat.tool_id);
+				return;
 			}
 
 			String json_out = JacksonUtil.prettyPrint(item);
