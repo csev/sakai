@@ -2435,7 +2435,7 @@ public class LTI13Servlet extends HttpServlet {
 		if ( ! results ) {
 			SakaiLineItem item = LineItemUtil.getLineItemForToolColumn(signed_placement, context_id, sat.tool_id, a);
 			if (item == null) {
-				LTI13Util.return404(response, "Could not load column");
+				LTI13Util.return404(response, "Line item not exposed for this tool");
 				log.error("Line item not exposed for this tool; column_id={} context_id={} tool_id={}",
 						lineitem_key, context_id, sat.tool_id);
 				return;

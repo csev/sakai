@@ -926,7 +926,10 @@ public class GradingServiceImpl implements GradingService {
         assignment.setExternallyMaintained(assignmentDefinition.getExternallyMaintained());
         assignment.setExternalId(assignmentDefinition.getExternalId());
         assignment.setExternalData(assignmentDefinition.getExternalData());
-        assignment.setLineItemMetadata(assignmentDefinition.getLineItemMetadata());
+        // Only overwrite when the definition carries a value; null means omitted so we keep persisted LTI line-item metadata.
+        if (assignmentDefinition.getLineItemMetadata() != null) {
+            assignment.setLineItemMetadata(assignmentDefinition.getLineItemMetadata());
+        }
 
         assignment.setLineItem(assignmentDefinition.getLineItem());
 
