@@ -2195,12 +2195,8 @@ public class LTI13Servlet extends HttpServlet {
 			LTI13Util.return403(response, "Permission denied updating lineitem");
 			return;
 		} catch (RuntimeException e) {
-			log.error(e.getMessage(), e);
-			LTI13Util.return400(response, StringUtils.defaultIfBlank(e.getMessage(), "Could not update lineitem"));
-			return;
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-			LTI13Util.return400(response, StringUtils.defaultIfBlank(e.getMessage(), "Could not update lineitem"));
+			log.error("Could not update lineitem", e);
+			LTI13Util.return400(response, "Could not update lineitem");
 			return;
 		}
 
