@@ -44,6 +44,7 @@ import org.sakaiproject.util.ResourceLoader;
  * This class parses a comma (or other separator other than a double-quote) delimited
  * file.
  */
+
 public class OutlookReader extends CSVReader
 {
 	private static final ResourceLoader rb = new ResourceLoader("calendar");
@@ -68,7 +69,12 @@ public class OutlookReader extends CSVReader
 		InputStream stream,
 		ReaderImportRowHandler handler) throws ImportException
 	{
-		BufferedReader bufferedReader = getReader(stream);
+		BufferedReader bufferedReader; 
+		try {
+			bufferedReader = getReader(stream);
+		} catch (IOException e) {
+			throw new ImportException(e);
+		}
 
 		ColumnHeader columnDescriptionArray[] = null;
 		
@@ -154,12 +160,18 @@ public class OutlookReader extends CSVReader
 	 * 
 	 * This is because MS Outlook exports in other char set that UTF-8 and it probably   
 	 * depends on the Outlook's language 
+	 * @throws IOException 
 	 */
-	protected BufferedReader getReader(InputStream stream) {
+	protected BufferedReader getReader(InputStream stream) throws IOException {
 		//Detect and exclude all BOM
-		BOMInputStream bomIn = new BOMInputStream(stream, false, ByteOrderMark.UTF_8,
-				ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_32LE,
-				ByteOrderMark.UTF_32BE);
+		BOMInputStream bomIn =  BOMInputStream.builder()
+					.setInputStream(stream)
+					.setByteOrderMarks(ByteOrderMark.UTF_8,
+					ByteOrderMark.UTF_16LE, ByteOrderMark.UTF_16BE, ByteOrderMark.UTF_32LE,
+					ByteOrderMark.UTF_32BE)
+					.setInclude(false)
+					.get();
+		
 
 		InputStreamReader inputStream = new InputStreamReader(bomIn);
 		BufferedReader bufferedReader = new BufferedReader(inputStream);

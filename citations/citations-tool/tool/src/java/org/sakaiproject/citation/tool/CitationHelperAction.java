@@ -3438,7 +3438,18 @@ public class CitationHelperAction extends VelocityPortletPaneledAction
 	      InputStream risImportStream = risImport.getInputStream();
 
 			// Attempt to detect the encoding of the file.
-			BOMInputStream irs = new BOMInputStream(risImportStream);
+	      BOMInputStream irs;
+			try {
+					irs = BOMInputStream.builder().setInputStream(risImportStream).get();
+				} catch (IOException e) {
+					log.warn("Unable to construct BOMInputStream for RIS import", e);
+					try {
+					    risImportStream.close();
+					} catch (IOException risIoe) {
+					    log.warn("Attempted to close RIS import, {}", risIoe.toString());
+					}
+					return;
+				}
 		
 			// below is needed if UTF-8 above is commented out
 			Reader isr = null;
@@ -3448,7 +3459,7 @@ public class CitationHelperAction extends VelocityPortletPaneledAction
 				 bomCharsetName = irs.getBOMCharsetName();
 				if (bomCharsetName != null)
 				{
-					isr = new InputStreamReader(risImportStream, bomCharsetName);
+					isr = new InputStreamReader(irs, bomCharsetName);
 				}
 			} catch (UnsupportedEncodingException uee)
 			{

@@ -22,10 +22,10 @@
 package org.sakaiproject.calendar.impl.readers;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -262,8 +262,9 @@ public abstract class Reader
 	/**
 	 * Utility routine to get a BufferedReader
 	 * @param stream
+	 * @throws IOException 
 	 */
-	protected BufferedReader getReader(InputStream stream)
+	protected BufferedReader getReader(InputStream stream) throws IOException
 	{
 		InputStreamReader inStreamReader = new InputStreamReader(stream);
 		BufferedReader bufferedReader = new BufferedReader(inStreamReader);
