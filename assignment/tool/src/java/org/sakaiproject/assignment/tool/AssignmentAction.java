@@ -2038,8 +2038,6 @@ public class AssignmentAction extends PagedResourceActionII {
                 int protect = LTIUtil.toInt(content.get(LTIService.LTI_PROTECT));
                 String assignmentTitle = StringUtils.trimToEmpty(assignment.getTitle());
                 String assignmentDesc = StringUtils.trimToEmpty(assignment.getInstructions());
-                Instant visibleDate = assignment.getVisibleDate();
-                String assignmentVisibleDate = StringUtils.trimToEmpty(visibleDate == null ? null : visibleDate.toString());
                 Instant openDate = assignment.getOpenDate();
                 String assignmentOpenDate = StringUtils.trimToEmpty(openDate == null ? null : openDate.toString());
                 Instant dueDate = assignment.getDueDate();
@@ -2054,12 +2052,11 @@ public class AssignmentAction extends PagedResourceActionII {
 
                 String content_settings = (String) content.get(LTIService.LTI_SETTINGS);
                 JSONObject content_json = LTIUtil.parseJSONObject(content_settings);
-                String contentVisibleDate = StringUtils.trimToEmpty((String) content_json.get(DeepLinkResponse.RESOURCELINK_AVAILABLE_STARTDATETIME));
                 String contentOpenDate = StringUtils.trimToEmpty((String) content_json.get(DeepLinkResponse.RESOURCELINK_SUBMISSION_STARTDATETIME));
                 String contentDueDate = StringUtils.trimToEmpty((String) content_json.get(DeepLinkResponse.RESOURCELINK_SUBMISSION_ENDDATETIME));
                 String contentCloseDate = StringUtils.trimToEmpty((String) content_json.get(DeepLinkResponse.RESOURCELINK_AVAILABLE_ENDDATETIME));
                 if ( protect < 1 || !assignmentTitle.equals(contentTitle) || !assignmentDesc.equals(contentDesc) ||
-                        ! contentVisibleDate.equals(assignmentVisibleDate) || ! contentOpenDate.equals(assignmentOpenDate) ||
+                        ! contentOpenDate.equals(assignmentOpenDate) ||
                         ! contentDueDate.equals(assignmentDueDate) || ! contentCloseDate.equals(assignmentCloseDate) ||
                         placement_secret == null ) {
                     Map<String, Object> updates = new TreeMap<String, Object>();
@@ -2078,7 +2075,8 @@ public class AssignmentAction extends PagedResourceActionII {
                     content_json.put(LTIService.LTI_PROTECT, new Integer(1));
 
                     // Copy assignment specific custom parameter substitutions to pass into SakaiLTIUtil
-                    content_json.put(DeepLinkResponse.RESOURCELINK_AVAILABLE_STARTDATETIME, assignmentVisibleDate);
+                    // visibleDate is deprecated and not used.
+                    content_json.put(DeepLinkResponse.RESOURCELINK_AVAILABLE_STARTDATETIME, assignmentOpenDate);
                     content_json.put(DeepLinkResponse.RESOURCELINK_SUBMISSION_STARTDATETIME, assignmentOpenDate);
                     content_json.put(DeepLinkResponse.RESOURCELINK_AVAILABLE_ENDDATETIME, assignmentDueDate);
                     content_json.put(DeepLinkResponse.RESOURCELINK_SUBMISSION_ENDDATETIME, assignmentCloseDate);
