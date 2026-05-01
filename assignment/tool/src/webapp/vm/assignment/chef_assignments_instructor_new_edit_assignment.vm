@@ -554,7 +554,8 @@
                                 if ( submission.endDateTime ) {
                                     var tdate = new Date(submission.endDateTime);
                                     tdate = tdate.toLocaleString([], options).replace(',','');
-                                    $("#duedate").val(tdate);
+                                    $("#closedate").val(tdate);
+                                    $("#duedate").val(tdate);    // LTI treats closedate as due date since there is no real due date
                                 }
                             }
                             if ( item && item.available ) {
@@ -568,6 +569,7 @@
                                     var tdate = new Date(available.endDateTime);
                                     tdate = tdate.toLocaleString([], options).replace(',','');
                                     $("#closedate").val(tdate);
+                                    $("#duedate").val(tdate);   // LTI treats closedate as due date since there is no real due date
                                 }
                             }
                             // Handle new page

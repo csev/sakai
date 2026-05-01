@@ -2108,7 +2108,6 @@ public class AssignmentAction extends PagedResourceActionII {
                     // after the instructor updates the assignment, and the student is
                     // the first to launch after the change.:
                     ltiService.updateContentDao(contentKey, updates);
-                    System.out.println("UPDATED");
                     log.debug("Content Item id={} updated.", contentKey);
                 }
 
