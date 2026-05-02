@@ -30,7 +30,7 @@ These values are returned to Sakai and used to **pre-populate** the Assignments 
 
 After save, a tool can read the final values using LTI Advantage services or via substitution variables:
 
-```
+```text
 ResourceLink.available.startDateTime
 ResourceLink.available.endDateTime
 ResourceLink.submission.startDateTime
@@ -70,6 +70,7 @@ To keep behavior predictable and interoperable, Sakai applies this mapping when 
 |------|--------|
 | **`submission.endDateTime` is authoritative** | When present, it defines the assignment deadline and is used for **both** due date and accept-until date. |
 | **`available.endDateTime` is fallback only** | Used only when `submission.endDateTime` is not provided; it must **never** override `submission.endDateTime`. |
+| **`submission.startDateTime` overrides `available.startDateTime` for open** | When both are present, the assignment **open** date follows `ResourceLink.submission.startDateTime`; `ResourceLink.available.startDateTime` does not win for open in that case (same precedence idea as end dates). |
 | **Due date and close date may be identical** | LTI does not distinguish a soft due date from a hard cutoff; Sakai may collapse these to one value. |
 
 ### Rationale
@@ -83,7 +84,10 @@ To keep behavior predictable and interoperable, Sakai applies this mapping when 
 
 - `submission.endDateTime` → Sakai **due** date (authoritative)
 - `available.endDateTime` → fallback **due** / **close** date
-- `available.startDateTime` → Sakai **open** date
+- `available.startDateTime` → Sakai **open** date (fallback when `submission.startDateTime` is absent)
+- `submission.startDateTime` → Sakai **open** date when present; **`submission.startDateTime` overrides `available.startDateTime`** when both are present
+
+**Where this is applied in the UI:** In `assignment/tool/src/webapp/vm/assignment/chef_assignments_instructor_new_edit_assignment.vm`, the External Tool deep-link callback `returnContentItem` assigns both `ResourceLink.available.startDateTime` and `ResourceLink.submission.startDateTime` to the assignment open-date input **`#opendate`** in that order, so the submission value wins if both are returned.
 
 This favors consistency with real-world LTI tool behavior over a strict, spec-only reading that would disagree with common implementations.
 

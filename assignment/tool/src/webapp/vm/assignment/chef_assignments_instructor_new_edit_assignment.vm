@@ -556,7 +556,7 @@
                                     var tdate = new Date(available.endDateTime);
                                     tdate = tdate.toLocaleString([], options).replace(',','');
                                     $("#closedate").val(tdate);
-                                    $("#duedate").val(tdate);   // LTI treats closedate as due date since there is no real due date
+                                    $("#duedate").val(tdate);   // Sakai sets both duedate and closedate from the LTI deadline since LTI has no separate soft-deadline
                                 }
                             }
 							if ( item && item.submission ) { 
@@ -570,7 +570,7 @@
                                     var tdate = new Date(submission.endDateTime);
                                     tdate = tdate.toLocaleString([], options).replace(',','');
                                     $("#closedate").val(tdate);
-                                    $("#duedate").val(tdate);    // LTI treats closedate as due date since there is no real due date
+                                    $("#duedate").val(tdate);    // Sakai sets both duedate and closedate from the LTI deadline since LTI has no separate soft-deadline
                                 }
                             }
                             // Handle new page
