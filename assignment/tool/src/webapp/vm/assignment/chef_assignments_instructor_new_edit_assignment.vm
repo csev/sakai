@@ -544,20 +544,7 @@
                             // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/DateTimeFormat
                             // https://stackoverflow.com/a/63160519/1994792
                             var options = {year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'};
-                            if ( item && item.submission ) {
-                                var submission = item.submission;
-                                if ( submission.startDateTime ) {
-                                    var tdate = new Date(submission.startDateTime);
-                                    tdate = tdate.toLocaleString([], options).replace(',','');
-                                    $("#opendate").val(tdate);
-                                }
-                                if ( submission.endDateTime ) {
-                                    var tdate = new Date(submission.endDateTime);
-                                    tdate = tdate.toLocaleString([], options).replace(',','');
-                                    $("#closedate").val(tdate);
-                                    $("#duedate").val(tdate);    // LTI treats closedate as due date since there is no real due date
-                                }
-                            }
+
                             if ( item && item.available ) {
                                 var available = item.available;
                                 if ( available.startDateTime ) {
@@ -570,6 +557,20 @@
                                     tdate = tdate.toLocaleString([], options).replace(',','');
                                     $("#closedate").val(tdate);
                                     $("#duedate").val(tdate);   // LTI treats closedate as due date since there is no real due date
+                                }
+                            }
+							if ( item && item.submission ) { 
+                                var submission = item.submission;
+                                if ( submission.startDateTime ) {
+                                    var tdate = new Date(submission.startDateTime);
+                                    tdate = tdate.toLocaleString([], options).replace(',','');
+                                    $("#opendate").val(tdate);
+                                }
+                                if ( submission.endDateTime ) {
+                                    var tdate = new Date(submission.endDateTime);
+                                    tdate = tdate.toLocaleString([], options).replace(',','');
+                                    $("#closedate").val(tdate);
+                                    $("#duedate").val(tdate);    // LTI treats closedate as due date since there is no real due date
                                 }
                             }
                             // Handle new page

@@ -2063,15 +2063,16 @@ public class AssignmentAction extends PagedResourceActionII {
                 content_json.put(LTIService.LTI_PROTECT, new Integer(1));
 
                 // Copy assignment specific custom parameter substitutions to pass into SakaiLTIUtil
-                // Normally Sakai does not show, populate nor use visibleDate so we fall bacl to open date
+                // Normally Sakai does not show, populate nor use visibleDate so we fall back to open date
+                content_json.put(DeepLinkResponse.RESOURCELINK_SUBMISSION_STARTDATETIME, assignmentOpenDate);
+                content_json.put(DeepLinkResponse.RESOURCELINK_SUBMISSION_ENDDATETIME, assignmentDueDate);
                 if ( ! StringUtils.isBlank(assignmentVisibleDate) ) {
                     content_json.put(DeepLinkResponse.RESOURCELINK_AVAILABLE_STARTDATETIME, assignmentVisibleDate);
                 } else {
                     content_json.put(DeepLinkResponse.RESOURCELINK_AVAILABLE_STARTDATETIME, assignmentOpenDate);
                 }
-                content_json.put(DeepLinkResponse.RESOURCELINK_SUBMISSION_STARTDATETIME, assignmentOpenDate);
                 content_json.put(DeepLinkResponse.RESOURCELINK_AVAILABLE_ENDDATETIME, assignmentCloseDate);
-                content_json.put(DeepLinkResponse.RESOURCELINK_SUBMISSION_ENDDATETIME, assignmentCloseDate);
+
 
                 // There is no real place for due date in the variables most tools treat close date as due date
                 content_json.put(SakaiLTIUtil.SAKAI_LTI_SUBSTITUTION_DUE_DATE, assignmentDueDate);
