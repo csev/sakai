@@ -549,24 +549,24 @@
 
                             if ( item && item.available ) {
                                 var available = item.available;
-                                if ( available.startDateTime ) {
+                                if ( available.startDateTime && openDatePicker ) {
                                     openDatePicker.epochMillis = Date.parse(available.startDateTime);
                                 }
                                 if ( available.endDateTime ) {
                                     const epochMillis = Date.parse(available.endDateTime);
-                                    closeDatePicker.epochMillis = epochMillis;
-                                    dueDatePicker.epochMillis = epochMillis;   // Sakai sets both duedate and closedate from the LTI deadline since LTI has no separate soft-deadline
+                                    if ( closeDatePicker ) closeDatePicker.epochMillis = epochMillis;
+                                    if ( dueDatePicker ) dueDatePicker.epochMillis = epochMillis;   // Sakai sets both duedate and closedate from the LTI deadline since LTI has no separate soft-deadline
                                 }
                             }
 							if ( item && item.submission ) { 
                                 var submission = item.submission;
-                                if ( submission.startDateTime ) {
+                                if ( submission.startDateTime && openDatePicker ) {
                                     openDatePicker.epochMillis = Date.parse(submission.startDateTime);
                                 }
                                 if ( submission.endDateTime ) {
                                     const epochMillis = Date.parse(submission.endDateTime);
-                                    closeDatePicker.epochMillis = epochMillis;
-                                    dueDatePicker.epochMillis = epochMillis;    // Sakai sets both duedate and closedate from the LTI deadline since LTI has no separate soft-deadline
+                                    if ( closeDatePicker ) closeDatePicker.epochMillis = epochMillis;
+                                    if ( dueDatePicker ) dueDatePicker.epochMillis = epochMillis;    // Sakai sets both duedate and closedate from the LTI deadline since LTI has no separate soft-deadline
                                 }
                             }
                             // Handle new page
