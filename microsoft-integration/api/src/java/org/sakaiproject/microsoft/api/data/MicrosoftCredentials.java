@@ -77,4 +77,12 @@ public class MicrosoftCredentials {
 				StringUtils.isNotBlank(getDelegatedScope()) &&
 				StringUtils.isNotBlank(email);
 	}
+
+	public String getTenantId() {
+		if (StringUtils.isBlank(authority)) {
+			return null;
+		}
+		String trimmed = StringUtils.stripEnd(authority, "/");
+		return trimmed.substring(trimmed.lastIndexOf('/') + 1);
+	}
 }
