@@ -126,8 +126,10 @@ current userId.
 
 The OAuth service can be configured through sakai.properties.
 
-The OAuth service is enabled by default. To disable OAuth on all requests this in the sakai.properties:
-`oauth.enabled=false`
+The OAuth service is disabled by default. To enable OAuth on all requests set this in sakai.properties:
+`oauth.enabled=true`
+
+OAuth in Sakai is deprecated (SAK-52541) and will be removed in a future release.
 
 ### Testing
 

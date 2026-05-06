@@ -47,7 +47,7 @@
             <bean factory-bean="org.sakaiproject.component.api.ServerConfigurationService"
                     factory-method="getBoolean">
                 <constructor-arg value="oauth.enabled"/>
-                <constructor-arg value="true"/>
+                <constructor-arg value="false"/>
             </bean>
         </property>
     </bean>
