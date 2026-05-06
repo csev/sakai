@@ -2837,6 +2837,8 @@ public class SakaiLTIUtil {
 		UserTimeService userTimeService = ComponentManager.get(UserTimeService.class);
 		org.sakaiproject.site.api.SiteService siteService = ComponentManager.get(org.sakaiproject.site.api.SiteService.class);
 
+		// Design rule: if a tool omits activityProgress, treat it as completed/submitted.
+		// Tools that manage lifecycle transitions must send activityProgress on every update.
 		String activityProgress = scoreObj.activityProgress != null ? scoreObj.activityProgress : Score.ACTIVITY_COMPLETED ;
 		String gradingProgress = scoreObj.gradingProgress != null ? scoreObj.gradingProgress : Score.GRADING_FULLYGRADED;
 		log.debug("activityProgress: {} gradingProgress: {}", activityProgress, gradingProgress);
@@ -2948,9 +2950,10 @@ public class SakaiLTIUtil {
 			}
 
 			Instant previousDateSubmitted = submission.getDateSubmitted();
-			boolean isInProgressState = activityProgress.equals(Score.ACTIVITY_INITIALIZED)
-					|| activityProgress.equals(Score.ACTIVITY_STARTED)
-					|| activityProgress.equals(Score.ACTIVITY_INPROGRESS);
+			boolean isInProgressState = StringUtils.equalsAny(activityProgress,
+					Score.ACTIVITY_INITIALIZED,
+					Score.ACTIVITY_STARTED,
+					Score.ACTIVITY_INPROGRESS);
 
 			/*
 			 * Submission lifecycle (step by step):
@@ -2978,7 +2981,8 @@ public class SakaiLTIUtil {
 				submission.setDateSubmitted(null);
 			} else {
 				submission.setSubmitted(true);
-				// Preserve existing submit time on repeated submit/restart callbacks.
+				// Non-in-progress branch (explicit submitted/completed OR missing-state default):
+				// initial submit sets now; duplicate submit preserves existing timestamp.
 				if (previousDateSubmitted == null) {
 					submission.setDateSubmitted(now);
 				} else {

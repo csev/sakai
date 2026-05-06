@@ -95,6 +95,11 @@ This favors consistency with real-world LTI tool behavior over a strict, spec-on
 
 Sakai treats `activityProgress` as a state machine for assignment submission status:
 
+0. **Tool omits `activityProgress`**
+   - Sakai defaults missing `activityProgress` to completed/submitted behavior
+   - This is intentional compatibility behavior for grade pushes without lifecycle state
+   - Tools that need/implement precise lifecycle control must send `activityProgress` on every update
+
 1. **Student submits (submitted/completed state)**
    - Example states: `ACTIVITY_SUBMITTED`, `ACTIVITY_COMPLETED`
    - Sakai sets `submitted = true`
