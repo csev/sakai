@@ -304,7 +304,7 @@ public class LTISecurityServiceImpl implements EntityProducer {
 					identifier the End-User might use to log in (if necessary).
 	*/
 	private void redirectOIDC(HttpServletRequest req, HttpServletResponse res,
-		Map<String, Object> content, Map<String, Object> tool, String oidc_endpoint, ResourceLoader rb)
+		Map<String, Object> content, Map<String, Object> tool, String oidc_endpoint, String launchSiteId, ResourceLoader rb)
 	{
 		// req.getRequestURL()=http://localhost:8080/access/lti/site/85fd092b-1755-4aa9-8abc-e6549527dce0/content:0
 		// req.getRequestURI()=/access/lti/site/85fd092b-1755-4aa9-8abc-e6549527dce0/content:0
@@ -332,7 +332,14 @@ public class LTISecurityServiceImpl implements EntityProducer {
 		}
 
 		String client_id = StringUtils.trimToNull((String) tool.get(LTIService.LTI13_CLIENT_ID));
-		String deployment_id = ServerConfigurationService.getString(SakaiLTIUtil.LTI13_DEPLOYMENT_ID, SakaiLTIUtil.LTI13_DEPLOYMENT_ID_DEFAULT);
+		String deployment_id = null;
+		Long toolKey = LTIUtil.toLongNull(tool.get(LTIService.LTI_ID));
+		if (toolKey != null && StringUtils.isNotBlank(launchSiteId)) {
+			deployment_id = StringUtils.trimToNull(ltiService.getDeploymentGroupForLaunch(toolKey, launchSiteId));
+		}
+		if (deployment_id == null) {
+			deployment_id = ServerConfigurationService.getString(SakaiLTIUtil.LTI13_DEPLOYMENT_ID, SakaiLTIUtil.LTI13_DEPLOYMENT_ID_DEFAULT);
+		}
 
 		// Use Base64DoubleUrlEncodeSafe to ensure proper URL-safe encoding
 		String encoded_login_hint = Base64DoubleUrlEncodeSafe.encode(login_hint);
@@ -433,8 +440,8 @@ public class LTISecurityServiceImpl implements EntityProducer {
 					if ( ! sanityCheck(req, res, null, tool, rb) ) return;
 
 					if (SakaiLTIUtil.isLTI13(tool) && StringUtils.isNotBlank(oidc_endpoint) &&
-							( StringUtils.isEmpty(state) || StringUtils.isEmpty(state) ) ) {
-						redirectOIDC(req, res, null, tool, oidc_endpoint, rb);
+							( StringUtils.isEmpty(state) || StringUtils.isEmpty(nonce) ) ) {
+						redirectOIDC(req, res, null, tool, oidc_endpoint, ref.getContext(), rb);
 						return;
 					}
 
@@ -514,7 +521,7 @@ public class LTISecurityServiceImpl implements EntityProducer {
 
 						if (SakaiLTIUtil.isLTI13(tool) && StringUtils.isNotBlank(oidc_endpoint) &&
 								(StringUtils.isEmpty(state) || StringUtils.isEmpty(nonce) ) ) {
-							redirectOIDC(req, res, content, tool, oidc_endpoint, rb);
+							redirectOIDC(req, res, content, tool, oidc_endpoint, ref.getContext(), rb);
 							return;
 						}
 					}

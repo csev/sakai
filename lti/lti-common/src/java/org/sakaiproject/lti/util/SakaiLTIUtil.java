@@ -1271,6 +1271,11 @@ public class SakaiLTIUtil {
 			LTI13Util.addCustomToLaunch(ltiProps, custom);
 
 			if (isLTI13) {
+				Long toolKey = LTIUtil.toLongNull(tool.get(LTIService.LTI_ID));
+				String deploymentGroup = ltiService.getDeploymentGroupForLaunch(toolKey, context);
+				if (StringUtils.isNotBlank(deploymentGroup)) {
+					toolProps.setProperty(LTIService.LTI_JWT_DEPLOYMENT_ID_OVERRIDE_PROP, deploymentGroup);
+				}
 				return postLaunchJWT(toolProps, ltiProps, site, tool, content, rb);
 			}
 			return postLaunchHTML(toolProps, ltiProps, rb);
@@ -1568,6 +1573,11 @@ public class SakaiLTIUtil {
 				setProperty(toolProps, "state", state);  // So far LTI 1.3 only
 				setProperty(toolProps, "nonce", nonce);  // So far LTI 1.3 only
 				toolProps.put(LTIService.LTI_DEBUG, dodebug ? "1" : "0");
+
+				String deploymentGroup = ltiService.getDeploymentGroupForLaunch(toolKey, context);
+				if (StringUtils.isNotBlank(deploymentGroup)) {
+					toolProps.setProperty(LTIService.LTI_JWT_DEPLOYMENT_ID_OVERRIDE_PROP, deploymentGroup);
+				}
 
 				Map<String, Object> content = null;
 				return postLaunchJWT(toolProps, ltiProps, site, tool, content, rb);
@@ -1868,7 +1878,11 @@ public class SakaiLTIUtil {
 			lj.nonce = toolProps.getProperty("nonce");
 			lj.issued = Long.valueOf(System.currentTimeMillis() / 1000L);
 			lj.expires = lj.issued + 3600L;
-			lj.deployment_id = getDeploymentId(context_id);
+			String deploymentId = StringUtils.trimToNull(toolProps.getProperty(LTIService.LTI_JWT_DEPLOYMENT_ID_OVERRIDE_PROP));
+			if (deploymentId == null) {
+				deploymentId = getDeploymentId(context_id);
+			}
+			lj.deployment_id = deploymentId;
 
 			String lti1_roles = fixLegacyRoles(ltiProps.getProperty("roles"));
 			if (lti1_roles != null ) {
