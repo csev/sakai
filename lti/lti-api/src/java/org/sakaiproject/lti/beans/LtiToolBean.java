@@ -52,7 +52,7 @@ public class LtiToolBean extends LTIBaseBean {
     public String description;         // TOOL_MODEL: "description:textarea:label=bl_description:maxlength=4096:archive=true"
     public String status;              // TOOL_MODEL: "status:radio:label=bl_status:choices=enable,disable"
     public String visible;             // TOOL_MODEL: "visible:radio:label=bl_visible:choices=visible,stealth:role=admin"
-    public Long deploymentId;          // TOOL_MODEL: "deployment_id:integer:hidden=true:archive=true"
+    public String deploymentId;        // TOOL_MODEL: "deployment_id:text:label=bl_deployment_id:maxlength=255:role=admin:archive=true"
     public String launch;              // TOOL_MODEL: "launch:url:label=bl_launch:maxlength=1024:required=true:archive=true"
     public Integer newpage;            // TOOL_MODEL: "newpage:radio:label=bl_newpage:choices=off,on,content:archive=true"
     public Integer frameheight;        // TOOL_MODEL: "frameheight:integer:label=bl_frameheight:archive=true"
@@ -139,7 +139,7 @@ public class LtiToolBean extends LTIBaseBean {
         tool.setDescription(getStringValue(map, LTIService.LTI_DESCRIPTION));
         tool.setStatus(getStringValue(map, LTIService.LTI_STATUS));
         tool.setVisible(getStringValue(map, LTIService.LTI_VISIBLE));
-        tool.setDeploymentId(getLongValue(map, "deployment_id"));
+        tool.setDeploymentId(getStringValue(map, LTIService.LTI_DEPLOYMENT_ID));
         tool.setLaunch(getStringValue(map, LTIService.LTI_LAUNCH));
         tool.setNewpage(getThreeStateValue(map, "newpage", "newpage"));
         tool.setFrameheight(getIntegerValue(map, LTIService.LTI_FRAMEHEIGHT));
@@ -224,7 +224,7 @@ public class LtiToolBean extends LTIBaseBean {
         putIfNotNull(map, LTIService.LTI_DESCRIPTION, description);
         putIfNotNull(map, LTIService.LTI_STATUS, status);
         putIfNotNull(map, LTIService.LTI_VISIBLE, visible);
-        putIfNotNull(map, "deployment_id", deploymentId);
+        putIfNotNull(map, LTIService.LTI_DEPLOYMENT_ID, deploymentId);
         putIfNotNull(map, LTIService.LTI_LAUNCH, launch);
         putThreeStateIfNotNull(map, "newpage", newpage, "newpage");
         putIfNotNull(map, LTIService.LTI_FRAMEHEIGHT, frameheight);

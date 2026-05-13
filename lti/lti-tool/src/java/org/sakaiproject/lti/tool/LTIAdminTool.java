@@ -692,7 +692,7 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 		context.put("authOIDC", authOIDC);
 
 		String site_id = toolBean.getSiteId();
-		String issuerURL = SakaiLTIUtil.getIssuer(site_id);
+		String issuerURL = SakaiLTIUtil.getIssuer();
 		context.put("issuerURL", issuerURL);
 
 		String deploymentId = SakaiLTIUtil.getDeploymentId(site_id);
@@ -812,7 +812,7 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 
 		String issuer = StringUtils.trimToNull((String) tool.get(LTIService.LTI13_LMS_ISSUER));
 		if ( issuer == null ) {
-			issuer = SakaiLTIUtil.getIssuer(site_id);
+			issuer = SakaiLTIUtil.getIssuer();
 			tool.put(LTIService.LTI13_LMS_ISSUER, issuer);
 			retval = true;
 		}
@@ -863,7 +863,7 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 
 		String issuer = StringUtils.trimToNull(toolBean.lti13LmsIssuer);
 		if ( issuer == null ) {
-			issuer = SakaiLTIUtil.getIssuer(site_id);
+			issuer = SakaiLTIUtil.getIssuer();
 			toolBean.lti13LmsIssuer = issuer;
 			retval = true;
 		}
@@ -982,7 +982,7 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 
 		String site_id = toolBean.siteId;
 		String clientId = toolBean.lti13ClientId;
-		String issuerURL = SakaiLTIUtil.getIssuer(site_id);
+		String issuerURL = SakaiLTIUtil.getIssuer();
 		String deploymentId = SakaiLTIUtil.getDeploymentId(site_id);
 
 		String sakaiConfigUrl = SakaiLTIUtil.getOurServerUrl() + "/imsblis/lti13/well_known";
@@ -1613,7 +1613,7 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 		minimalLTI13(toolBean);
 
 		String siteId = toolBean.siteId;
-		context.put("issuerURL", SakaiLTIUtil.getIssuer(siteId));
+		context.put("issuerURL", SakaiLTIUtil.getIssuer());
 
 		// If siteId is not blank, there is no option for visibility since the tool is always be visible in the site; otherwise, the tool can be visible or stealth
 		String excludePattern = StringUtils.isNotEmpty(siteId) ? "^visible:.*" : "^SITE_ID:.*";

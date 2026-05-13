@@ -105,7 +105,7 @@ public interface LTIService extends LTISubstitutionsFilter {
             "description:textarea:label=bl_description:maxlength=4096:archive=true",
             "status:radio:label=bl_status:choices=enable,disable",
             "visible:radio:label=bl_visible:choices=visible,stealth:role=admin",
-            "deployment_id:integer:hidden=true:archive=true",
+            "deployment_id:text:label=bl_deployment_id:maxlength=255:role=admin:archive=true",
             "launch:url:label=bl_launch:maxlength=1024:required=true:archive=true",
             "newpage:radio:label=bl_newpage:choices=off,on,content:archive=true",
             "frameheight:integer:label=bl_frameheight:archive=true",
@@ -275,6 +275,7 @@ public interface LTIService extends LTISubstitutionsFilter {
     Long LTI13_LTI11 = 0L;
     Long LTI13_LTI13 = 1L;
     Long LTI13_BOTH = 2L;
+    String LTI_DEPLOYMENT_ID = "deployment_id";
     String LTI13_CLIENT_ID = "lti13_client_id";
 
     String LTI13_TOOL_KEYSET = "lti13_tool_keyset";

@@ -1728,26 +1728,35 @@ public class SakaiLTIUtil {
 			return deployment_id;
 		}
 
-		public static String getIssuer(String site_id) {
-			String retval = getOurServerUrl();
-			String deployment_id = getDeploymentId(site_id);
-			if ( ! LTI13_DEPLOYMENT_ID_DEFAULT.equals(deployment_id) ) {
-					retval += "/deployment/" + deployment_id;
+		// Resolve the LTI 1.3 deployment_id to use when launching this tool.
+		// Lookup order (first non-blank wins):
+		//   1. The tool's own deployment_id (lti_tools.deployment_id)
+		//   2. (Future) a site-level override
+		//   3. The system-wide lti13.deployment_id property (defaults to "1")
+		// Never returns null - LTI 1.3 requires a deployment_id on every launch.
+		public static String getToolDeploymentId(Site site, Map<String, Object> tool) {
+			if (tool != null) {
+				Object deploymentId = tool.get("deployment_id");
+				String toolDeploymentId = deploymentId == null ? null : StringUtils.trimToNull(deploymentId.toString());
+				if (toolDeploymentId != null) {
+					return toolDeploymentId;
+				}
 			}
-			if ( StringUtils.isNotEmpty(site_id) ) {
-				retval = retval + "/site/" + site_id;
-			}
-			return retval;
+			return ServerConfigurationService.getString(LTI13_DEPLOYMENT_ID, LTI13_DEPLOYMENT_ID_DEFAULT);
 		}
 
-		public static String getSubject(String userId, String site_id) {
-			String retval = getOurServerUrl();
-			String deployment_id = getDeploymentId(site_id);
-			if ( ! LTI13_DEPLOYMENT_ID_DEFAULT.equals(deployment_id) ) {
-					retval += "/deployment/" + deployment_id;
-			}
-			retval = retval + "/user/" + userId;
-			return retval;
+		// LTI 1.3 / OIDC: the iss (issuer) claim is a stable per-platform identifier.
+		// Sakai's issuer is its canonical server URL; per-site/per-deployment scoping
+		// belongs in the deployment_id claim, not in the issuer.
+		public static String getIssuer() {
+			return getOurServerUrl();
+		}
+
+		// LTI 1.3 / OIDC: the sub (subject) claim is a stable per-user identifier
+		// within the issuer. It must not vary by site or deployment, otherwise the
+		// LTI 1.1 -> 1.3 migration claim and tool-side user identity break.
+		public static String getSubject(String userId) {
+			return getOurServerUrl() + "/user/" + userId;
 		}
 
 		// Return the Sakai user_id from an LTI 1.3 Subject
@@ -1856,8 +1865,8 @@ public class SakaiLTIUtil {
 			lj.locale = ltiProps.getProperty(LTIConstants.LAUNCH_PRESENTATION_LOCALE);
 			lj.launch_presentation.return_url = ltiProps.getProperty(LTIConstants.LAUNCH_PRESENTATION_RETURN_URL);
 			lj.audience = client_id;
-			lj.issuer = getIssuer(site_id);
-			lj.subject = getSubject(user_id, context_id);
+			lj.issuer = getIssuer();
+			lj.subject = getSubject(user_id);
 
 			// The name and email info have been checked for release value in addUserInfo
 			lj.name = ltiProps.getProperty(LTIConstants.LIS_PERSON_NAME_FULL);
@@ -1868,7 +1877,7 @@ public class SakaiLTIUtil {
 			lj.nonce = toolProps.getProperty("nonce");
 			lj.issued = Long.valueOf(System.currentTimeMillis() / 1000L);
 			lj.expires = lj.issued + 3600L;
-			lj.deployment_id = getDeploymentId(context_id);
+			lj.deployment_id = getToolDeploymentId(site, tool);
 
 			String lti1_roles = fixLegacyRoles(ltiProps.getProperty("roles"));
 			if (lti1_roles != null ) {
@@ -1932,7 +1941,7 @@ public class SakaiLTIUtil {
 			String for_user = req.getParameter(FOR_USER);
 			if ( for_user != null ) {
 				ForUser forUser = new ForUser();
-				forUser.user_id =  getSubject(for_user, context_id);
+				forUser.user_id =  getSubject(for_user);
 				lj.for_user = forUser;
 			}
 
