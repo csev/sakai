@@ -1723,11 +1723,6 @@ public class SakaiLTIUtil {
 			return retval;
 		}
 
-		public static String getDeploymentId(String site_id) {
-			String deployment_id = ServerConfigurationService.getString(LTI13_DEPLOYMENT_ID, LTI13_DEPLOYMENT_ID_DEFAULT);
-			return deployment_id;
-		}
-
 		// Resolve the LTI 1.3 deployment_id to use when launching this tool.
 		// Lookup order (first non-blank wins):
 		//   1. The tool's own deployment_id (lti_tools.deployment_id)

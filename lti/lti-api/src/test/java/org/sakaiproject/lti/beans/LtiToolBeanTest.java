@@ -97,7 +97,6 @@ public class LtiToolBeanTest {
         // LTI 1.3 security values from the LMS
         testMap.put("lti13_lms_issuer", "https://lms.com");
         testMap.put("lti13_client_id", "client123");
-        testMap.put("lti13_lms_deployment_id", "deployment456");
         testMap.put("lti13_lms_keyset", "https://lms.com/keyset");
         testMap.put("lti13_lms_endpoint", "https://lms.com/endpoint");
         testMap.put("lti13_lms_token", "https://lms.com/token");
@@ -192,7 +191,6 @@ public class LtiToolBeanTest {
         // LTI 1.3 security values from the LMS
         assertEquals("https://lms.com", tool.getLti13LmsIssuer());
         assertEquals("client123", tool.getLti13ClientId());
-        assertEquals("deployment456", tool.getLti13LmsDeploymentId());
         assertEquals("https://lms.com/keyset", tool.getLti13LmsKeyset());
         assertEquals("https://lms.com/endpoint", tool.getLti13LmsEndpoint());
         assertEquals("https://lms.com/token", tool.getLti13LmsToken());
@@ -264,7 +262,6 @@ public class LtiToolBeanTest {
         
         tool.setLti13LmsIssuer("https://test.com");
         tool.setLti13ClientId("testclient");
-        tool.setLti13LmsDeploymentId("testdeployment");
         tool.setLti13LmsKeyset("https://test.com/keyset");
         tool.setLti13LmsEndpoint("https://test.com/endpoint");
         tool.setLti13LmsToken("https://test.com/token");
@@ -340,7 +337,6 @@ public class LtiToolBeanTest {
         // LTI 1.3 security values from the LMS
         assertEquals("https://test.com", result.get("lti13_lms_issuer"));
         assertEquals("testclient", result.get("lti13_client_id"));
-        assertEquals("testdeployment", result.get("lti13_lms_deployment_id"));
         assertEquals("https://test.com/keyset", result.get("lti13_lms_keyset"));
         assertEquals("https://test.com/endpoint", result.get("lti13_lms_endpoint"));
         assertEquals("https://test.com/token", result.get("lti13_lms_token"));

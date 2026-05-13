@@ -1237,7 +1237,8 @@ public class LTI13Servlet extends HttpServlet {
 		Object toolConfigurationObj = jso.get("https://purl.imsglobal.org/spec/lti-tool-configuration");
 		if ( toolConfigurationObj instanceof JSONObject ) {
 			JSONObject toolConfiguration = (JSONObject) toolConfigurationObj;
-			String deployment_id = SakaiLTIUtil.getDeploymentId(null);
+			// No site context during dynamic registration; resolve from the tool record.
+			String deployment_id = SakaiLTIUtil.getToolDeploymentId(null, tool.asMap());
 			toolConfiguration.put("deployment_id", deployment_id);
 		}
 

@@ -97,7 +97,6 @@ public class LtiToolBean extends LTIBaseBean {
     // LTI 1.3 security values from the LMS from TOOL_MODEL
     public String lti13LmsIssuer;      // TOOL_MODEL: "lti13_lms_issuer:text:label=bl_lti13_lms_issuer:readonly=true:persist=false:maxlength=1024:role=admin"
     public String lti13ClientId;       // TOOL_MODEL: "lti13_client_id:text:label=bl_lti13_client_id:readonly=true:maxlength=1024:role=admin"
-    public String lti13LmsDeploymentId; // TOOL_MODEL: "lti13_lms_deployment_id:text:label=bl_lti13_lms_deployment_id:readonly=true:maxlength=1024:role=admin"
     public String lti13LmsKeyset;      // TOOL_MODEL: "lti13_lms_keyset:text:label=bl_lti13_lms_keyset:readonly=true:persist=false:maxlength=1024:role=admin"
     public String lti13LmsEndpoint;    // TOOL_MODEL: "lti13_lms_endpoint:text:label=bl_lti13_lms_endpoint:readonly=true:persist=false:maxlength=1024:role=admin"
     public String lti13LmsToken;       // TOOL_MODEL: "lti13_lms_token:text:label=bl_lti13_lms_token:readonly=true:persist=false:maxlength=1024:role=admin"
@@ -184,7 +183,6 @@ public class LtiToolBean extends LTIBaseBean {
         // LTI 1.3 security values from the LMS
         tool.setLti13LmsIssuer(getStringValue(map, "lti13_lms_issuer"));
         tool.setLti13ClientId(getStringValue(map, "lti13_client_id"));
-        tool.setLti13LmsDeploymentId(getStringValue(map, "lti13_lms_deployment_id"));
         tool.setLti13LmsKeyset(getStringValue(map, "lti13_lms_keyset"));
         tool.setLti13LmsEndpoint(getStringValue(map, "lti13_lms_endpoint"));
         tool.setLti13LmsToken(getStringValue(map, "lti13_lms_token"));
@@ -269,7 +267,6 @@ public class LtiToolBean extends LTIBaseBean {
         // LTI 1.3 security values from the LMS
         putIfNotNull(map, "lti13_lms_issuer", lti13LmsIssuer);
         putIfNotNull(map, "lti13_client_id", lti13ClientId);
-        putIfNotNull(map, "lti13_lms_deployment_id", lti13LmsDeploymentId);
         putIfNotNull(map, "lti13_lms_keyset", lti13LmsKeyset);
         putIfNotNull(map, "lti13_lms_endpoint", lti13LmsEndpoint);
         putIfNotNull(map, "lti13_lms_token", lti13LmsToken);

@@ -151,7 +151,6 @@ public interface LTIService extends LTISubstitutionsFilter {
             "lti13_lms_security:header:fields=lti13_lms_issuer,lti13_client_id,lti13_lms_keyset,lti13_lms_endpoint,lti13_lms_token",
             "lti13_lms_issuer:text:label=bl_lti13_lms_issuer:readonly=true:persist=false:maxlength=1024:role=admin",
             "lti13_client_id:text:label=bl_lti13_client_id:readonly=true:maxlength=1024:role=admin",
-            "lti13_lms_deployment_id:text:label=bl_lti13_lms_deployment_id:readonly=true:maxlength=1024:role=admin",
             "lti13_lms_keyset:text:label=bl_lti13_lms_keyset:readonly=true:persist=false:maxlength=1024:role=admin",
             "lti13_lms_endpoint:text:label=bl_lti13_lms_endpoint:readonly=true:persist=false:maxlength=1024:role=admin",
             "lti13_lms_token:text:label=bl_lti13_lms_token:readonly=true:persist=false:maxlength=1024:role=admin",
@@ -284,7 +283,6 @@ public interface LTIService extends LTISubstitutionsFilter {
 
     // Not persisted - generated dynamically
     String LTI13_LMS_ISSUER = "lti13_lms_issuer";
-    String LTI13_LMS_DEPLOYMENT_ID = "lti13_lms_deployment_id";
     String LTI13_LMS_KEYSET = "lti13_lms_keyset";
     String LTI13_LMS_TOKEN = "lti13_lms_token";
     String LTI13_LMS_ENDPOINT = "lti13_lms_endpoint";

@@ -691,11 +691,10 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 		String authOIDC = SakaiLTIUtil.getOurServerUrl() + "/imsoidc/lti13/oidc_auth";
 		context.put("authOIDC", authOIDC);
 
-		String site_id = toolBean.getSiteId();
 		String issuerURL = SakaiLTIUtil.getIssuer();
 		context.put("issuerURL", issuerURL);
 
-		String deploymentId = SakaiLTIUtil.getDeploymentId(site_id);
+		String deploymentId = SakaiLTIUtil.getToolDeploymentId(null, toolBean.asMap());
 		context.put("deploymentId", deploymentId);
 
 		String configUrl = SakaiLTIUtil.getOurServerUrl() + "/imsblis/lti13/sakai_config";
@@ -774,7 +773,6 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 		boolean retval = false;
 
 		Long tool_id = LTIUtil.toLongNull(tool.get(LTIService.LTI_ID));
-		String site_id = (String) tool.get(LTIService.LTI_SITE_ID);
 
 		String clientId = StringUtils.trimToNull((String) tool.get(LTIService.LTI13_CLIENT_ID));
 		if (clientId == null ) {
@@ -803,13 +801,6 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 			tool.put(LTIService.LTI13_LMS_TOKEN, tokenurl);
 		}
 
-		String deployment_id = StringUtils.trimToNull((String) tool.get(LTIService.LTI13_LMS_DEPLOYMENT_ID));
-		if ( deployment_id == null ) {
-			deployment_id = SakaiLTIUtil.getDeploymentId(site_id);
-			tool.put(LTIService.LTI13_LMS_DEPLOYMENT_ID, deployment_id);
-			retval = true;
-		}
-
 		String issuer = StringUtils.trimToNull((String) tool.get(LTIService.LTI13_LMS_ISSUER));
 		if ( issuer == null ) {
 			issuer = SakaiLTIUtil.getIssuer();
@@ -825,7 +816,6 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 		boolean retval = false;
 
 		Long tool_id = toolBean.id;
-		String site_id = toolBean.siteId;
 
 		String clientId = StringUtils.trimToNull(toolBean.lti13ClientId);
 		if (clientId == null ) {
@@ -852,13 +842,6 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 		if (tokenurl == null && tool_id != null ) {
 			tokenurl = SakaiLTIUtil.getOurServerUrl() + "/imsblis/lti13/token/" + tool_id;
 			toolBean.lti13LmsToken = tokenurl;
-		}
-
-		String deployment_id = StringUtils.trimToNull(toolBean.lti13LmsDeploymentId);
-		if ( deployment_id == null ) {
-			deployment_id = SakaiLTIUtil.getDeploymentId(site_id);
-			toolBean.lti13LmsDeploymentId = deployment_id;
-			retval = true;
 		}
 
 		String issuer = StringUtils.trimToNull(toolBean.lti13LmsIssuer);
@@ -980,10 +963,9 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 			return;
 		}
 
-		String site_id = toolBean.siteId;
 		String clientId = toolBean.lti13ClientId;
 		String issuerURL = SakaiLTIUtil.getIssuer();
-		String deploymentId = SakaiLTIUtil.getDeploymentId(site_id);
+		String deploymentId = SakaiLTIUtil.getToolDeploymentId(null, toolBean.asMap());
 
 		String sakaiConfigUrl = SakaiLTIUtil.getOurServerUrl() + "/imsblis/lti13/well_known";
 		sakaiConfigUrl += "?key=" + URLEncoder.encode(toolKey.toString());
