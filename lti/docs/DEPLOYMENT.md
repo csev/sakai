@@ -38,7 +38,7 @@ By convention (Moodle uses a similar approach) the default for new registrations
     # DEFAULT: "1"
     # lti13.deployment_id=1
 
-Overriding this default is uncommon. The LMS is allowed to mint this value.
+Overriding this default is uncommon. Per LTI 1.3, the LMS is allowed and expected to mint this value.
 
 When a tool is created or edited, the default `deployment_id` used for launches from that tool
 can be changed. Often it is left blank or null so the tool inherits the default `"1"`.
@@ -150,3 +150,4 @@ So while some situations need very tight control, as long as the partition refle
 organizational structure reasonably well, things should work without too much manual
 configuration.
 
+For manual QA aligned with this document, see [DEPLOYMENT-TEST-PLAN.md](./DEPLOYMENT-TEST-PLAN.md).
