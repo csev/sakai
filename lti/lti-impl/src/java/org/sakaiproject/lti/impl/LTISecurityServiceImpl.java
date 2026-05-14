@@ -332,14 +332,8 @@ public class LTISecurityServiceImpl implements EntityProducer {
 		}
 
 		String client_id = StringUtils.trimToNull((String) tool.get(LTIService.LTI13_CLIENT_ID));
-		String deployment_id = null;
-		Long toolKey = LTIUtil.toLongNull(tool.get(LTIService.LTI_ID));
-		if (toolKey != null && StringUtils.isNotBlank(launchSiteId)) {
-			deployment_id = StringUtils.trimToNull(ltiService.getDeploymentGroupForLaunch(toolKey, launchSiteId));
-		}
-		if (deployment_id == null) {
-			deployment_id = SakaiLTIUtil.getToolDeploymentId(site, tool);
-		}
+		String deployment_id = SakaiLTIUtil.resolveLaunchDeploymentId(site, launchSiteId,
+				LTIUtil.toLongNull(tool.get(LTIService.LTI_ID)), tool, ltiService);
 
 		// Use Base64DoubleUrlEncodeSafe to ensure proper URL-safe encoding
 		String encoded_login_hint = Base64DoubleUrlEncodeSafe.encode(login_hint);

@@ -160,6 +160,8 @@ public class SakaiLTIUtil {
 	public static final String LTI_LAUNCH_SESSION_TIMEOUT = "lti.launch.session.timeout";
 	public static final String LTI13_DEPLOYMENT_ID = "lti13.deployment_id";
 	public static final String LTI13_DEPLOYMENT_ID_DEFAULT = "1"; // To match Moodle
+	/** Comma-separated site property names; see {@link #resolveLaunchDeploymentId}. */
+	public static final String LTI13_DEPLOYMENT_ID_SITE_PROPERTIES = "lti13.deployment_id.site.properties";
 	public static final String LTI_CUSTOM_SUBSTITION_PREFIX =  "lti.custom.substitution.";
 	// SAK-45491 - Key rotation interval
 	public static final String LTI_ADVANTAGE_KEY_ROTATION_DAYS = "lti.advantage.key.rotation.days";
@@ -1271,11 +1273,6 @@ public class SakaiLTIUtil {
 			LTI13Util.addCustomToLaunch(ltiProps, custom);
 
 			if (isLTI13) {
-				Long toolKey = LTIUtil.toLongNull(tool.get(LTIService.LTI_ID));
-				String deploymentGroup = ltiService.getDeploymentGroupForLaunch(toolKey, context);
-				if (StringUtils.isNotBlank(deploymentGroup)) {
-					toolProps.setProperty(LTIService.LTI_JWT_DEPLOYMENT_ID_OVERRIDE_PROP, deploymentGroup);
-				}
 				return postLaunchJWT(toolProps, ltiProps, site, tool, content, rb);
 			}
 			return postLaunchHTML(toolProps, ltiProps, rb);
@@ -1574,11 +1571,6 @@ public class SakaiLTIUtil {
 				setProperty(toolProps, "nonce", nonce);  // So far LTI 1.3 only
 				toolProps.put(LTIService.LTI_DEBUG, dodebug ? "1" : "0");
 
-				String deploymentGroup = ltiService.getDeploymentGroupForLaunch(toolKey, context);
-				if (StringUtils.isNotBlank(deploymentGroup)) {
-					toolProps.setProperty(LTIService.LTI_JWT_DEPLOYMENT_ID_OVERRIDE_PROP, deploymentGroup);
-				}
-
 				Map<String, Object> content = null;
 				return postLaunchJWT(toolProps, ltiProps, site, tool, content, rb);
 			}
@@ -1733,21 +1725,104 @@ public class SakaiLTIUtil {
 			return retval;
 		}
 
-		// Resolve the LTI 1.3 deployment_id to use when launching this tool.
-		// Lookup order (first non-blank wins):
-		//   1. The tool's own deployment_id (lti_tools.deployment_id)
-		//   2. (Future) a site-level override
-		//   3. The system-wide lti13.deployment_id property (defaults to "1")
-		// Never returns null - LTI 1.3 requires a deployment_id on every launch.
-		public static String getToolDeploymentId(Site site, Map<String, Object> tool) {
+		/**
+		 * Normalizes a candidate LTI 1.3 {@code deployment_id} for launch: trims, then keeps only
+		 * ASCII letters, ASCII digits, hyphen ({@code -}), and underscore ({@code _}). All other code points are removed.
+		 *
+		 * @return the filtered string, or null if nothing remains
+		 */
+		public static String normalizeLtiDeploymentIdForLaunch(String raw) {
+			if (raw == null) {
+				return null;
+			}
+			String trimmed = raw.trim();
+			if (trimmed.isEmpty()) {
+				return null;
+			}
+			StringBuilder sb = new StringBuilder(trimmed.length());
+			for (int i = 0; i < trimmed.length(); i++) {
+				char c = trimmed.charAt(i);
+				if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' || c == '_') {
+					sb.append(c);
+				}
+			}
+			if (sb.length() == 0) {
+				return null;
+			}
+			return sb.toString();
+		}
+
+		/**
+		 * Resolves the LTI 1.3 {@code deployment_id} for a launch (first normalized non-blank wins).
+		 * Each candidate value is passed through {@link #normalizeLtiDeploymentIdForLaunch(String)}.
+		 * Order matches {@code lti/docs/DEPLOYMENT.md}:
+		 * <ol>
+		 * <li>Site property {@value #LTI13_DEPLOYMENT_ID}</li>
+		 * <li>{@code lti_tool_site.deployment_group} for this tool and launch site (via {@code LTIService})</li>
+		 * <li>Site properties named in server {@value #LTI13_DEPLOYMENT_ID_SITE_PROPERTIES} (comma-separated), in order</li>
+		 * <li>Tool record {@code deployment_id} ({@code lti_tools.deployment_id})</li>
+		 * <li>Server {@value #LTI13_DEPLOYMENT_ID} in {@code sakai.properties} (typically {@value #LTI13_DEPLOYMENT_ID_DEFAULT})</li>
+		 * </ol>
+		 *
+		 * @param site launch site, or null when unavailable (skips site-based sources)
+		 * @param launchSiteId site id where the launch runs (for {@code lti_tool_site}); may be null
+		 * @param toolKey primary key of the tool row, or null
+		 * @param tool tool map (may be null)
+		 * @param ltiService used for tool-site lookup; null skips step 2
+		 * @return non-null deployment id for JWT / OIDC parameters
+		 */
+		public static String resolveLaunchDeploymentId(Site site, String launchSiteId, Long toolKey,
+				Map<String, Object> tool, LTIService ltiService) {
+			String normalized;
+			if (site != null) {
+				String explicit = StringUtils.trimToNull(site.getProperties().getProperty(LTI13_DEPLOYMENT_ID));
+				normalized = normalizeLtiDeploymentIdForLaunch(explicit);
+				if (normalized != null) {
+					return normalized;
+				}
+			}
+			if (ltiService != null && toolKey != null && StringUtils.isNotBlank(launchSiteId)) {
+				String dg = ltiService.getDeploymentGroupForLaunch(toolKey, launchSiteId);
+				normalized = normalizeLtiDeploymentIdForLaunch(dg);
+				if (normalized != null) {
+					return normalized;
+				}
+			}
+			if (site != null) {
+				String sitePropList = ServerConfigurationService.getString(LTI13_DEPLOYMENT_ID_SITE_PROPERTIES, "");
+				if (StringUtils.isNotBlank(sitePropList)) {
+					for (String token : sitePropList.split(",")) {
+						String key = StringUtils.trimToNull(token);
+						if (key == null) {
+							continue;
+						}
+						String val = StringUtils.trimToNull(site.getProperties().getProperty(key));
+						normalized = normalizeLtiDeploymentIdForLaunch(val);
+						if (normalized != null) {
+							return normalized;
+						}
+					}
+				}
+			}
 			if (tool != null) {
 				Object deploymentId = tool.get("deployment_id");
 				String toolDeploymentId = deploymentId == null ? null : StringUtils.trimToNull(deploymentId.toString());
-				if (toolDeploymentId != null) {
-					return toolDeploymentId;
+				normalized = normalizeLtiDeploymentIdForLaunch(toolDeploymentId);
+				if (normalized != null) {
+					return normalized;
 				}
 			}
-			return ServerConfigurationService.getString(LTI13_DEPLOYMENT_ID, LTI13_DEPLOYMENT_ID_DEFAULT);
+			String serverDefault = ServerConfigurationService.getString(LTI13_DEPLOYMENT_ID, LTI13_DEPLOYMENT_ID_DEFAULT);
+			normalized = normalizeLtiDeploymentIdForLaunch(serverDefault);
+			return normalized != null ? normalized : LTI13_DEPLOYMENT_ID_DEFAULT;
+		}
+
+		/**
+		 * Resolves {@code deployment_id} when no launch site or {@link LTIService} context is available
+		 * (same as {@link #resolveLaunchDeploymentId} with null launch site id, tool key, and service).
+		 */
+		public static String getToolDeploymentId(Site site, Map<String, Object> tool) {
+			return resolveLaunchDeploymentId(site, null, null, tool, null);
 		}
 
 		// LTI 1.3 / OIDC: the iss (issuer) claim is a stable per-platform identifier.
@@ -1882,11 +1957,10 @@ public class SakaiLTIUtil {
 			lj.nonce = toolProps.getProperty("nonce");
 			lj.issued = Long.valueOf(System.currentTimeMillis() / 1000L);
 			lj.expires = lj.issued + 3600L;
-			String deploymentId = StringUtils.trimToNull(toolProps.getProperty(LTIService.LTI_JWT_DEPLOYMENT_ID_OVERRIDE_PROP));
-			if (deploymentId == null) {
-				deploymentId = getToolDeploymentId(site, tool);
-			}
-			lj.deployment_id = deploymentId;
+			String launchSiteId = StringUtils.trimToNull(ltiProps.getProperty(LTIConstants.CONTEXT_ID));
+			Long toolKeyJwt = LTIUtil.toLongNull(tool.get(LTIService.LTI_ID));
+			LTIService ltiServiceJwt = (LTIService) ComponentManager.get("org.sakaiproject.lti.api.LTIService");
+			lj.deployment_id = resolveLaunchDeploymentId(site, launchSiteId, toolKeyJwt, tool, ltiServiceJwt);
 
 			String lti1_roles = fixLegacyRoles(ltiProps.getProperty("roles"));
 			if (lti1_roles != null ) {

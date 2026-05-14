@@ -290,14 +290,13 @@ public interface LTIService extends LTISubstitutionsFilter {
 
     /**
      * Optional per-site deployment identifier for LTI 1.3 (lti_tool_site.deployment_group).
-     * When set for a tool deployed to the launch site, it overrides the platform-wide
-     * {@code lti.deployment_id} for OIDC and JWT {@code deployment_id}.
+     * Used in {@link org.sakaiproject.lti.util.SakaiLTIUtil#resolveLaunchDeploymentId} at precedence
+     * step 2 (after explicit site {@code lti13.deployment_id}, before mapped site properties).
      */
     String LTI_DEPLOYMENT_GROUP = "deployment_group";
 
     /**
-     * Internal {@link java.util.Properties} key passed into {@code postLaunchJWT} to override
-     * the JWT {@code deployment_id} claim (not an LTI database column).
+     * @deprecated No longer read; use {@link org.sakaiproject.lti.util.SakaiLTIUtil#resolveLaunchDeploymentId} instead.
      */
     String LTI_JWT_DEPLOYMENT_ID_OVERRIDE_PROP = "lti_jwt_deployment_id_override";
 

@@ -14,8 +14,8 @@ for authorization decisions. The tools must still receive the `deployment_id` an
 on certain API calls; in those situations the tool typically accepts whatever value the LMS
 sends and echoes it as required.
 
-Treat `deployment_id` values as alphanumeric slugs: letters, digits, and dashes. If Sakai
-sees illegal characters, it removes them at launch time so the protocol does not fail. For
+Treat `deployment_id` values as alphanumeric slugs: ASCII letters, ASCII digits, hyphens, and underscores. If Sakai
+sees other characters, it removes them at launch time so the protocol does not fail. For
 example, `"Hello 🌴 123"` becomes `"Hello123"` because the emoji and spaces are not allowed.
 
 Multiple Deployments in a Sakai Instance
@@ -55,6 +55,21 @@ That is somewhat inconvenient to set by hand. Usually it is set by the process t
 sites (semesters, schools, departments, courses). It might also be populated as part of
 Delegated Access setup, or set manually on a site for testing.
 
+Per-tool deployment when manually deployed to sites
+-----------------------------------------------------
+
+Some tools are registered with **manual deployment**: they are not visible everywhere; an
+administrator deploys them only to selected sites. In the LTI admin tool, **Tool in site**
+deployment screens let you add many sites at once and, for each tool–site link, optionally set
+a **deployment group** (letters and digits). That value is stored on the `lti_tool_site` row and,
+at launch time, contributes to the LTI 1.3 `deployment_id` sent to the tool when it wins in the
+precedence chain described below (after an explicit site `lti13.deployment_id` and before mapped
+site properties). Leaving it blank is fine; launches then fall through to the next sources in
+that chain.
+
+Typical use: bulk-deploy one registered tool to a long list of sites and give each site (or batch
+of sites) its own deployment identifier so the external tool can separate tenants or billing.
+
 Launch-time resolution (first match wins)
 -----------------------------------------
 
@@ -63,12 +78,20 @@ At each launch, Sakai resolves `deployment_id` in this order:
 | Step | Source |
 |------|--------|
 | 1 | Site property `lti13.deployment_id`, if set and non-blank after normalization |
-| 2 | First site property named in `lti13.deployment_id.site.properties` (comma-separated list), in order, that exists and is non-blank after normalization |
-| 3 | Tool-level default, if configured and non-blank after normalization |
-| 4 | Server default from `lti13.deployment_id` in `sakai.properties` (typically `"1"`) |
+| 2 | `lti_tool_site.deployment_group` for this LTI tool and launch site, when a matching tool-site row exists and the value is non-blank after normalization (see *Tool in site* / deployment UI in the LTI admin tool) |
+| 3 | First site property named in `lti13.deployment_id.site.properties` (comma-separated list), in order, that exists and is non-blank after normalization |
+| 4 | Tool-level default (`lti_tools.deployment_id`), if configured and non-blank after normalization |
+| 5 | Server default from `lti13.deployment_id` in `sakai.properties` (typically `"1"`) |
 
-Normalization is applied before comparing or sending values (illegal characters removed or
-mapped per implementation). The first non-blank normalized value in the chain is used.
+Step 2 applies only when the launch has a site id and tool id so Sakai can look up `lti_tool_site`.
+It ranks **below** the explicit site property in step 1 and **above** the generic site-property
+list in step 3, so a course-wide `lti13.deployment_id` on the site still wins over a per-tool
+deployment group, while the deployment group still wins over mapped org properties such as
+`School` or `colDiv`.
+
+Normalization is applied before comparing or sending values: only ASCII letters, digits,
+hyphen (`-`), and underscore (`_`) are kept after trim; other characters are removed. The first
+non-blank normalized value in the chain is used.
 
 Automatic Unit-Based Deployment Id Generation
 ---------------------------------------------
@@ -96,15 +119,17 @@ Or, for a different local convention:
     lti13.deployment_id.site.properties=colDiv
 
 Multiple names are allowed; order is the priority order among those properties (after the
-explicit site `lti13.deployment_id`, per the table above):
+explicit site `lti13.deployment_id` and after `lti_tool_site.deployment_group`, per the table above):
 
     lti13.deployment_id.site.properties=colDiv,unit
 
 Each institution knows its local convention for organizational site properties and can tune
 `sakai.properties` to get the desired result.
 
-**Scope:** `deployment_id` resolution applies to all tools launched from a site. There is no
-separate rule per tool (for example different logic for tool X versus tool Y).
+**Scope:** Steps 1, 3, and 5 are shared by every tool launched from a site. Step 2 is **per tool
+and site** (`lti_tool_site`), so two tools in the same course can still send different
+`deployment_id` values when each has its own tool-site deployment group. Step 4 is the
+tool’s own default from `lti_tools`.
 
 Summary
 -------
