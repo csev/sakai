@@ -1239,7 +1239,7 @@ public class LTI13Servlet extends HttpServlet {
 			JSONObject toolConfiguration = (JSONObject) toolConfigurationObj;
 			// No site context during dynamic registration; resolve from the tool record.
 			String deployment_id = SakaiLTIUtil.getToolDeploymentId(null, tool.asMap());
-			toolConfiguration.put("deployment_id", deployment_id);
+			toolConfiguration.put(LTIService.LTI_DEPLOYMENT_ID, deployment_id);
 		}
 
 		String json_out = null;

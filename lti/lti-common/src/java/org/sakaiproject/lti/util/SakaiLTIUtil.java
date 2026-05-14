@@ -1805,7 +1805,7 @@ public class SakaiLTIUtil {
 				}
 			}
 			if (tool != null) {
-				Object deploymentId = tool.get("deployment_id");
+				Object deploymentId = tool.get(LTIService.LTI_DEPLOYMENT_ID);
 				String toolDeploymentId = deploymentId == null ? null : StringUtils.trimToNull(deploymentId.toString());
 				normalized = normalizeLtiDeploymentIdForLaunch(toolDeploymentId);
 				if (normalized != null) {
