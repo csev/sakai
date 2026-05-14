@@ -10,7 +10,7 @@ Style note: each part lists **roles**, **steps**, and **Expected** outcomes. Adj
 
 - An **LTI 1.3** external tool that exposes launch claims (JWT / message debugger), e.g. a Tsugi “LMS Test”–style tool, IMS reference consumer, or vendor “show claims” placement. Without this, many checks are indirect.
 - Ability to set **site properties** (Site Info → Manage Access → Edit Properties, or admin equivalent).
-- Ability to change **`sakai.properties`** and restart (for `lti13.deployment_id` and `lti13.deployment_id.site.properties`). Prefer a **non-production** node. Parts whose title includes **(dev test)** require that kind of server config change and restart before the steps apply.
+- Ability to change **`sakai.properties`** and restart for keys configured there (including the **server default** `lti13.deployment_id` and `lti13.deployment_id.site.properties`). Set **per-site** `lti13.deployment_id` via site properties, not `sakai.properties`. Prefer a **non-production** node. Parts whose title includes **(dev test)** require that kind of server config change and restart before the steps apply.
 - **Admin** access to **LTI Admin** for tool registration, visibility, and **Tool in site** / bulk deploy flows.
 - At least **two course sites** (Site A, Site B) and **two LTI 1.3 tools** (Tool 1, Tool 2) where the product allows manual deployment and deployment groups.
 
@@ -229,7 +229,7 @@ Style note: each part lists **roles**, **steps**, and **Expected** outcomes. Adj
 
 1. In `sakai.properties`, set `lti13.deployment_id.site.properties=School` (or the **site property name** your course templates populate, e.g. `colDiv`). This names **per-site** properties Sakai reads for Step 3—it does not inject a deployment id server-wide; template sites must carry that named property on each site.
 2. Ensure several sites created from your template have a non-blank **`School`** **site property** (matching the name from step 1).
-3. Set the site property `lti13.deployment_id=pilot99` on the pilot site (do not change server-wide `sakai.properties` for this override).
+3. Set the site property `lti13.deployment_id=pilot99` on the pilot site (do not change server-wide sakai.properties).
 4. Launch the same tool from a “template” site and from the pilot site.
 
 ### Expected
