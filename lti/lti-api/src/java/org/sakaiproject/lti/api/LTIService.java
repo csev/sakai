@@ -956,8 +956,39 @@ public interface LTIService extends LTISubstitutionsFilter {
     }
 
     /**
+     * Normalizes {@link #LTI_UPDATED_AT} values from JDBC/Foorm maps for duplicate-row resolution.
+     */
+    private static java.util.Date toolSiteRowUpdatedAt(Object updatedAt) {
+        if (updatedAt == null) {
+            return null;
+        }
+        if (updatedAt instanceof java.util.Date) {
+            return (java.util.Date) updatedAt;
+        }
+        if (updatedAt instanceof Number) {
+            return new java.util.Date(((Number) updatedAt).longValue());
+        }
+        return null;
+    }
+
+    /**
+     * @return true if {@code candidate} should replace {@code best} as the newer tool-site row
+     */
+    private static boolean isNewerToolSiteRow(java.util.Date candidateTs, java.util.Date bestTs) {
+        if (candidateTs != null) {
+            return bestTs == null || candidateTs.after(bestTs);
+        }
+        return false;
+    }
+
+    /**
      * Returns the optional {@link #LTI_DEPLOYMENT_GROUP} for a tool deployed to the given site,
      * or null when unset or when there is no matching tool-site row.
+     * <p>
+     * If more than one {@code lti_tool_site} row matches the tool and site (no composite unique
+     * is enforced at the schema level), the row with the greatest {@link #LTI_UPDATED_AT} wins;
+     * null timestamps are treated as older than any real timestamp, and ties among nulls keep
+     * the first matching row.
      *
      * @param toolKey primary key of the LTI tool
      * @param launchSiteId site id where the launch occurs (must match the tool-site row {@link #LTI_SITE_ID})
@@ -974,6 +1005,8 @@ public interface LTIService extends LTISubstitutionsFilter {
         if (rows == null) {
             return null;
         }
+        Map<String, Object> bestRow = null;
+        java.util.Date bestUpdated = null;
         for (Map<String, Object> row : rows) {
             Object siteObj = row.get(LTI_SITE_ID);
             if (siteObj == null) {
@@ -982,14 +1015,21 @@ public interface LTIService extends LTISubstitutionsFilter {
             if (!trimmedSite.equals(siteObj.toString().trim())) {
                 continue;
             }
-            Object dg = row.get(LTI_DEPLOYMENT_GROUP);
-            if (dg == null) {
-                return null;
+            java.util.Date updated = toolSiteRowUpdatedAt(row.get(LTI_UPDATED_AT));
+            if (bestRow == null || isNewerToolSiteRow(updated, bestUpdated)) {
+                bestRow = row;
+                bestUpdated = updated;
             }
-            String s = dg.toString().trim();
-            return s.isEmpty() ? null : s;
         }
-        return null;
+        if (bestRow == null) {
+            return null;
+        }
+        Object dg = bestRow.get(LTI_DEPLOYMENT_GROUP);
+        if (dg == null) {
+            return null;
+        }
+        String s = dg.toString().trim();
+        return s.isEmpty() ? null : s;
     }
 
     // ------------------------------------------------------------------------------------
