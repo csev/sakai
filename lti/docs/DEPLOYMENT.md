@@ -99,15 +99,18 @@ Automatic Unit-Based Deployment Id Generation
 Many course-site processes already set site properties from the org structure where the
 course lives. For example, the default course provider on Sakai's nightly servers sets:
 
-    School      EDUCATION
+    School      MUSIC
+    Department  Blues
 
 Another common pattern:
 
     colDiv      ENGR
+    school      CompSci
 
 These strings are suitable as `deployment_id` values once any disallowed characters are
 stripped. Such properties often partition course sites naturally, so they are good candidates
-to drive `deployment_id` for launches from a site.
+to drive `deployment_id` for launches from a site.  Case matters in these property names and
+values.
 
 To use one or more site properties this way, configure a comma-separated list in
 `sakai.properties`:
@@ -121,7 +124,7 @@ Or, for a different local convention:
 Multiple names are allowed; order is the priority order among those properties (after the
 explicit site `lti13.deployment_id` and after `lti_tool_site.deployment_group`, per the table above):
 
-    lti13.deployment_id.site.properties=colDiv,unit
+    lti13.deployment_id.site.properties=colDiv,school
 
 Each institution knows its local convention for organizational site properties and can tune
 `sakai.properties` to get the desired result.
