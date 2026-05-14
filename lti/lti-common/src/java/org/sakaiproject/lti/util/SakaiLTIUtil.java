@@ -1273,7 +1273,7 @@ public class SakaiLTIUtil {
 			LTI13Util.addCustomToLaunch(ltiProps, custom);
 
 			if (isLTI13) {
-				return postLaunchJWT(toolProps, ltiProps, site, tool, content, rb);
+				return postLaunchJWT(toolProps, ltiProps, site, tool, content, ltiService, rb);
 			}
 			return postLaunchHTML(toolProps, ltiProps, rb);
 		}
@@ -1572,7 +1572,7 @@ public class SakaiLTIUtil {
 				toolProps.put(LTIService.LTI_DEBUG, dodebug ? "1" : "0");
 
 				Map<String, Object> content = null;
-				return postLaunchJWT(toolProps, ltiProps, site, tool, content, rb);
+				return postLaunchJWT(toolProps, ltiProps, site, tool, content, ltiService, rb);
 			}
 
 			// LTI 1.1.2
@@ -1853,7 +1853,7 @@ public class SakaiLTIUtil {
 		}
 
 		public static String[] postLaunchJWT(Properties toolProps, Properties ltiProps,
-				Site site, Map<String, Object> tool, Map<String, Object> content, ResourceLoader rb) {
+				Site site, Map<String, Object> tool, Map<String, Object> content, LTIService ltiService, ResourceLoader rb) {
 			log.debug("postLaunchJWT LTI 1.3");
 			String launch_url = toolProps.getProperty("secure_launch_url");
 			if (launch_url == null) {
@@ -1959,8 +1959,7 @@ public class SakaiLTIUtil {
 			lj.expires = lj.issued + 3600L;
 			String launchSiteId = StringUtils.trimToNull(ltiProps.getProperty(LTIConstants.CONTEXT_ID));
 			Long toolKeyJwt = LTIUtil.toLongNull(tool.get(LTIService.LTI_ID));
-			LTIService ltiServiceJwt = (LTIService) ComponentManager.get("org.sakaiproject.lti.api.LTIService");
-			lj.deployment_id = resolveLaunchDeploymentId(site, launchSiteId, toolKeyJwt, tool, ltiServiceJwt);
+			lj.deployment_id = resolveLaunchDeploymentId(site, launchSiteId, toolKeyJwt, tool, ltiService);
 
 			String lti1_roles = fixLegacyRoles(ltiProps.getProperty("roles"));
 			if (lti1_roles != null ) {
