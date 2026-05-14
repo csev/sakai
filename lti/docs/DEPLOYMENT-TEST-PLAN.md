@@ -227,15 +227,15 @@ Style note: each part lists **roles**, **steps**, and **Expected** outcomes. Adj
 
 ### Steps
 
-1. Set `lti13.deployment_id.site.properties=School` (or local equivalent).
-2. Ensure several sites have `School` from template
-3. Set `lti13.deployment_id=pilot99` on one pilot site only.
+1. In `sakai.properties`, set `lti13.deployment_id.site.properties=School` (or the **site property name** your course templates populate, e.g. `colDiv`). This names **per-site** properties Sakai reads for Step 3—it does not inject a deployment id server-wide; template sites must carry that named property on each site.
+2. Ensure several sites created from your template have a non-blank **`School`** **site property** (matching the name from step 1).
+3. Set the site property `lti13.deployment_id=pilot99` on the pilot site (do not change server-wide `sakai.properties` for this override).
 4. Launch the same tool from a “template” site and from the pilot site.
 
 ### Expected
 
-- Template sites: value from **School** (Step 3).
-- Pilot site: **`pilot99`** (Step 1).
+- Template sites: value from the mapped **site** property (e.g. **`School`**, steps 1–2).
+- Pilot site: **`pilot99`** from the explicit site property `lti13.deployment_id` (step 3).
 
 ---
 
