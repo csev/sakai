@@ -174,6 +174,7 @@ public interface LTIService extends LTISubstitutionsFilter {
             "tool_id:integer:hidden=true",
             "SITE_ID:text:label=bl_tool_site_SITE_ID:required=true:maxlength=99:role=admin",
             "notes:text:label=bl_tool_site_notes:maxlength=1024",
+            "deployment_group:text:label=bl_deployment_group:maxlength=128:alphanumeric=true:truncate=false",
             "created_at:autodate",
             "updated_at:autodate",
     };
@@ -286,6 +287,19 @@ public interface LTIService extends LTISubstitutionsFilter {
     String LTI13_LMS_KEYSET = "lti13_lms_keyset";
     String LTI13_LMS_TOKEN = "lti13_lms_token";
     String LTI13_LMS_ENDPOINT = "lti13_lms_endpoint";
+
+    /**
+     * Optional per-site deployment identifier for LTI 1.3 (lti_tool_site.deployment_group).
+     * When set for a tool deployed to the launch site, it overrides the platform-wide
+     * {@code lti.deployment_id} for OIDC and JWT {@code deployment_id}.
+     */
+    String LTI_DEPLOYMENT_GROUP = "deployment_group";
+
+    /**
+     * Internal {@link java.util.Properties} key passed into {@code postLaunchJWT} to override
+     * the JWT {@code deployment_id} claim (not an LTI database column).
+     */
+    String LTI_JWT_DEPLOYMENT_ID_OVERRIDE_PROP = "lti_jwt_deployment_id_override";
 
     // Checksum for import and export
     String SAKAI_TOOL_CHECKSUM = "sakai_tool_checksum";
@@ -940,6 +954,43 @@ public interface LTIService extends LTISubstitutionsFilter {
         return toolSiteMaps.stream()
                 .map(org.sakaiproject.lti.beans.LtiToolSiteBean::of)
                 .collect(java.util.stream.Collectors.toList());
+    }
+
+    /**
+     * Returns the optional {@link #LTI_DEPLOYMENT_GROUP} for a tool deployed to the given site,
+     * or null when unset or when there is no matching tool-site row.
+     *
+     * @param toolKey primary key of the LTI tool
+     * @param launchSiteId site id where the launch occurs (must match the tool-site row {@link #LTI_SITE_ID})
+     */
+    default String getDeploymentGroupForLaunch(Long toolKey, String launchSiteId) {
+        if (toolKey == null || launchSiteId == null) {
+            return null;
+        }
+        String trimmedSite = launchSiteId.trim();
+        if (trimmedSite.isEmpty()) {
+            return null;
+        }
+        List<Map<String, Object>> rows = getToolSitesByToolId(String.valueOf(toolKey), trimmedSite);
+        if (rows == null) {
+            return null;
+        }
+        for (Map<String, Object> row : rows) {
+            Object siteObj = row.get(LTI_SITE_ID);
+            if (siteObj == null) {
+                continue;
+            }
+            if (!trimmedSite.equals(siteObj.toString().trim())) {
+                continue;
+            }
+            Object dg = row.get(LTI_DEPLOYMENT_GROUP);
+            if (dg == null) {
+                return null;
+            }
+            String s = dg.toString().trim();
+            return s.isEmpty() ? null : s;
+        }
+        return null;
     }
 
     // ------------------------------------------------------------------------------------
