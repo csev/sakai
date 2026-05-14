@@ -1228,19 +1228,20 @@ public class LTIAdminTool extends VelocityPortletPaneledAction {
 		List<String> insertSuccessSiteIds = new ArrayList<>();
 		List<String> insertErrorMessages = new ArrayList<>();
 
+		String adminSiteId = getSiteId(state);
+		boolean isLti13 = isLti13Tool(toolId, adminSiteId);
+		String deploymentGroup = isLti13 ? StringUtils.trimToNull(reqProps.getProperty(LTIService.LTI_DEPLOYMENT_GROUP)) : null;
+
 		for (String inputSiteId : uniqueInputSiteIds) {
 			Properties props = new Properties();
 			props.setProperty("tool_id", toolId);
 			props.setProperty("SITE_ID", inputSiteId);
 			props.setProperty("notes", reqProps.getProperty("notes"));
-			if (isLti13Tool(toolId, getSiteId(state))) {
-				String deploymentGroup = StringUtils.trimToNull(reqProps.getProperty(LTIService.LTI_DEPLOYMENT_GROUP));
-				if (deploymentGroup != null) {
-					props.setProperty(LTIService.LTI_DEPLOYMENT_GROUP, deploymentGroup);
-				}
+			if (deploymentGroup != null) {
+				props.setProperty(LTIService.LTI_DEPLOYMENT_GROUP, deploymentGroup);
 			}
 
-			Object retval = ltiService.insertToolSite(props, getSiteId(state));
+			Object retval = ltiService.insertToolSite(props, adminSiteId);
 
 			if (retval instanceof String) {	// Error
 				insertErrorMessages.add("SiteId=" + inputSiteId + ", retval=" + retval + ".");
