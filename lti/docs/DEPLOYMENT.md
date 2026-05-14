@@ -1,0 +1,127 @@
+
+Sakai Support for LTI Deployments
+=================================
+
+IMS LTI 1.3 includes a concept called `deployment_id` for servers that serve multiple tenants
+from the same URL, or for SaaS-style hosts that use a single platform signing key pair
+for JWTs across all hosted instances (for example Canvas or Blackboard). In Sakai we use
+one key pair per server. We still need to support multiple tenants for LTI tools—law,
+engineering, or even a single site when a tool wants different billing for different areas
+of the university.
+
+Most tools sell to the "whole university" and in effect ignore the `deployment_id` from Sakai
+for authorization decisions. The tools must still receive the `deployment_id` and send it
+on certain API calls; in those situations the tool typically accepts whatever value the LMS
+sends and echoes it as required.
+
+Treat `deployment_id` values as alphanumeric slugs: letters, digits, and dashes. If Sakai
+sees illegal characters, it removes them at launch time so the protocol does not fail. For
+example, `"Hello 🌴 123"` becomes `"Hello123"` because the emoji and spaces are not allowed.
+
+Multiple Deployments in a Sakai Instance
+----------------------------------------
+
+Some tools license by seat count; different parts of the university pay separately and do
+not want to share a seat pool. Those cases are addressed by assigning different
+`deployment_id` values to different sites or (more commonly) groups of sites.
+
+**Operational note:** If two unrelated orgs end up with the same `deployment_id` after mapping
+(for example the same `colDiv` value, or the same string after stripping), their seat pools can
+merge from the tool's perspective. Uniqueness across the intended partition is an operational
+responsibility unless the product later adds detection or warnings.
+
+When a tool is installed (registered), `deployment_id` is generally set to `"1"` because the
+field is required from the first step of tool creation, including LTI Dynamic Registration.
+By convention (Moodle uses a similar approach) the default for new registrations is
+`deployment_id` `1`. The server default can be overridden in `sakai.properties`:
+
+    # DEFAULT: "1"
+    # lti13.deployment_id=1
+
+Overriding this default is uncommon. The LMS is allowed to mint this value.
+
+When a tool is created or edited, the default `deployment_id` used for launches from that tool
+can be changed. Often it is left blank or null so the tool inherits the default `"1"`.
+
+Per-Site Deployment Id
+----------------------
+
+System and tool defaults for `deployment_id` are coarse-grained. The finest grain is to give
+every site its own `deployment_id` by setting the `lti13.deployment_id` property on the site:
+
+    lti13.deployment_id=42
+
+That is somewhat inconvenient to set by hand. Usually it is set by the process that creates
+sites (semesters, schools, departments, courses). It might also be populated as part of
+Delegated Access setup, or set manually on a site for testing.
+
+Launch-time resolution (first match wins)
+-----------------------------------------
+
+At each launch, Sakai resolves `deployment_id` in this order:
+
+| Step | Source |
+|------|--------|
+| 1 | Site property `lti13.deployment_id`, if set and non-blank after normalization |
+| 2 | First site property named in `lti13.deployment_id.site.properties` (comma-separated list), in order, that exists and is non-blank after normalization |
+| 3 | Tool-level default, if configured and non-blank after normalization |
+| 4 | Server default from `lti13.deployment_id` in `sakai.properties` (typically `"1"`) |
+
+Normalization is applied before comparing or sending values (illegal characters removed or
+mapped per implementation). The first non-blank normalized value in the chain is used.
+
+Automatic Unit-Based Deployment Id Generation
+---------------------------------------------
+
+Many course-site processes already set site properties from the org structure where the
+course lives. For example, the default course provider on Sakai's nightly servers sets:
+
+    School      EDUCATION
+
+Another common pattern:
+
+    colDiv      ENGR
+
+These strings are suitable as `deployment_id` values once any disallowed characters are
+stripped. Such properties often partition course sites naturally, so they are good candidates
+to drive `deployment_id` for launches from a site.
+
+To use one or more site properties this way, configure a comma-separated list in
+`sakai.properties`:
+
+    lti13.deployment_id.site.properties=School
+
+Or, for a different local convention:
+
+    lti13.deployment_id.site.properties=colDiv
+
+Multiple names are allowed; order is the priority order among those properties (after the
+explicit site `lti13.deployment_id`, per the table above):
+
+    lti13.deployment_id.site.properties=colDiv,unit
+
+Each institution knows its local convention for organizational site properties and can tune
+`sakai.properties` to get the desired result.
+
+**Scope:** `deployment_id` resolution applies to all tools launched from a site. There is no
+separate rule per tool (for example different logic for tool X versus tool Y).
+
+Summary
+-------
+
+While this might sound a bit complex, one simplifying factor is that most tools are installed
+instance-wide (or linked broadly across sites), so the tool default of `"1"` is perfectly
+sufficient because those tools do not gate launches on `deployment_id`.
+
+Tools that do gate launches (and billing) on `deployment_id` generally read the value from
+the launch and check whether it is already known. If there is an existing mapping from
+`deployment_id` to a billing tenant, the launch proceeds. If the `deployment_id` is new, the
+tool usually runs a flow to register that `deployment_id` and associate it with a tenant or
+client. Until that flow completes, the first launch from a new `deployment_id` may be
+blocked, limited, or redirected by the tool; behavior is tool-specific, so admins should not
+assume a brand-new deployment always results in a fully working first click.
+
+So while some situations need very tight control, as long as the partition reflects the
+organizational structure reasonably well, things should work without too much manual
+configuration.
+
