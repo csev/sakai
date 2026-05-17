@@ -59,6 +59,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.json.simple.JSONArray;
 import org.sakaiproject.authz.api.AuthzGroupService;
@@ -118,6 +119,7 @@ import org.tsugi.lti.LTIUtil;
  *
  */
 @SuppressWarnings("deprecation")
+@Setter
 @Slf4j
 public class LTI13Servlet extends HttpServlet {
 
@@ -133,12 +135,6 @@ public class LTI13Servlet extends HttpServlet {
 	@Override
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		if (ltiService == null) {
-			ltiService = (LTIService) ComponentManager.get("org.sakaiproject.lti.api.LTIService");
-		}
-		if (sakaiAccessTokenService == null) {
-			sakaiAccessTokenService = (SakaiAccessTokenService) ComponentManager.get(SakaiAccessTokenService.class.getName());
-		}
 	}
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
